@@ -1,0 +1,22 @@
+SSB: https://ssb.no/befolkning/statistikker/familie/aar/2016-04-14
+SSB: https://www.ssb.no/befolkning/samordnet-statistikk-for-husholdninger-og-boliger
+Kartverket: http://www.seeiendom.no/
+
+OSM resource links:
+http://wiki.openstreetmap.org/wiki/Addresses#How_to_map_addresses
+http://wiki.openstreetmap.org/wiki/Addresses#Norway
+http://osm.beebeetle.com/addrnodeimportstatus.php
+
+OSM links:
+Kanalveien 66 http://www.openstreetmap.org/search?query=kanalveien%2066#map=19/60.36224/5.34696
+Bergen http://www.openstreetmap.org/relation/404159#map=10/60.3572/5.4163
+
+For downloading map data:
+https://mapzen.com/data/metro-extracts/
+https://mapzen.com/documentation/metro-extracts/file-format/
+
+For QA of street names:
+http://labs.vegdata.no/nvdb-datakatalog/
+https://www.vegvesen.no/nvdb/apidokumentasjon/
+https://no.wikipedia.org/wiki/Liste_over_Bergens_gater
+http://www.bring.no/radgivning/sende-noe/adressetjenester/postnummer
