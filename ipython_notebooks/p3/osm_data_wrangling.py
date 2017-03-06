@@ -900,7 +900,7 @@ def process_map(file_in, pretty = False):
     file_out = "{0}.json".format(file_in)
     data = []
     
-    with codecs.open(file_out, "w") as fo:
+    with codecs.open(file_out, "w", encoding="utf-8") as fo:
         
         count = 0
         
