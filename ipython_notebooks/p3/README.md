@@ -8,6 +8,7 @@
 **osm_data_wrangling.ipynb**      Jupyter notebook version of osm_data_wrangling.html.  
 **osm_data_wrangling.py**         .py version of osm_data_wrangling.html.  
 **osm_experiments_&_notes.ipynb** As the name implies, this contains disorganized notes etc.  
+**map_location_link.txt**         Link to map location.  
 **sources.txt**                   Overview of the sources used in the project.
 
 #### Data folder
