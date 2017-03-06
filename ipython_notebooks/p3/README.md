@@ -1,8 +1,16 @@
 # Wrangle OpenStreetMap Data
 
 ### File decriptions
-**osm_analysis.html**         Main analysis document.  
-**osm_analysis.ipynb**        Jupyter notebook version of the analysis document.  
-**osm_data_wrangling.html**   Displays the pre-import cleaning process.  
-**osm_data_wrangling.ipynb**  Jupyter notebook version of osm_data_wrangling.ipynb.  
+**osm_analysis.html**             Main analysis document.  
+**osm_analysis.ipynb**            Jupyter notebook version of the analysis document.  
+**osm_data_wrangling.html**       Displays the pre-import cleaning process.  
+**osm_data_wrangling.ipynb**      Jupyter notebook version of osm_data_wrangling.ipynb.
+**osm_experiments_&_notes.ipynb** As the name implies, this contains disorganized notes etc.
+**sources.txt**                   Overview of the sources used in the project.
+
+#### Data folder
+**bergen.osm.gz**                 Compressed version (12MB) of the main data file. Uncompressed file size is 143MB.
+**sample.osm**                    Smaller sample generated from the bergen.osm data file.
+**kanalveien_66_duplicates.png**  Screenshot used in analysis file.
+
 
