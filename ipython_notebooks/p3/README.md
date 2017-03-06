@@ -3,8 +3,10 @@
 ### File decriptions
 **osm_analysis.html**             Main analysis document.  
 **osm_analysis.ipynb**            Jupyter notebook version of the analysis document.  
+**osm_analysis.py**               .py version of the analysis document.  
 **osm_data_wrangling.html**       Displays the pre-import cleaning process.  
-**osm_data_wrangling.ipynb**      Jupyter notebook version of osm_data_wrangling.ipynb.
+**osm_data_wrangling.ipynb**      Jupyter notebook version of osm_data_wrangling.html.  
+**osm_data_wrangling.py**         .py version of osm_data_wrangling.html.  
 **osm_experiments_&_notes.ipynb** As the name implies, this contains disorganized notes etc.  
 **sources.txt**                   Overview of the sources used in the project.
 
