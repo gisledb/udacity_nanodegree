@@ -1,10 +1,15 @@
 # Wrangle OpenStreetMap Data
+Project 3 of the Udacity Data Analyst nanodegree. Data wrangling and analysis of Bergen, Norway OSM data, using Python and MongoDB.
 
-### File decriptions
+### Primary files
+**Project Report.html**              Summary of osm_data_wrangling.html and osm_analysis.html. Describes the wrangling process and analysis findings.  
 **osm_analysis.html**             Main analysis document.  
+**osm_data_wrangling.html**       Displays the pre-import cleaning process.  
+
+
+### Other files
 **osm_analysis.ipynb**            Jupyter notebook version of the analysis document.  
 **osm_analysis.py**               .py version of the analysis document.  
-**osm_data_wrangling.html**       Displays the pre-import cleaning process.  
 **osm_data_wrangling.ipynb**      Jupyter notebook version of osm_data_wrangling.html.  
 **osm_data_wrangling.py**         .py version of osm_data_wrangling.html.  
 **osm_experiments_&_notes.ipynb** As the name implies, this contains disorganized notes etc.  
