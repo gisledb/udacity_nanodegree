@@ -2,9 +2,12 @@
 Project 3 of the Udacity Data Analyst nanodegree. Data wrangling and analysis of Bergen, Norway OSM data, using Python and MongoDB.
 
 ### Primary files
-**Project Report.html**              Summary of osm_data_wrangling.html and osm_analysis.html. Describes the wrangling process and analysis findings.  
-**osm_analysis.html**             Main analysis document.  
-**osm_data_wrangling.html**       Displays the pre-import cleaning process.  
+**Project Report.html**           
+    Summary of osm_data_wrangling.html and osm_analysis.html. Describes the wrangling process and analysis findings.  
+**osm_analysis.html**             
+    Main analysis document.  
+**osm_data_wrangling.html**       
+    Displays the pre-import cleaning process.  
 
 
 ### Other files
