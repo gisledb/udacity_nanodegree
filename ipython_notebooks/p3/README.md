@@ -16,7 +16,7 @@ Project 3 of the Udacity Data Analyst nanodegree. Data wrangling and analysis of
 **osm_data_wrangling.py**         
     - .py version of osm_data_wrangling.html.  
 **osm_analysis.ipynb**            
-    - Jupyter notebook version of the analysis document. To run this you first need to run osm_data_wrangling (.ipynb or .py).    
+    - Jupyter notebook version of osm_analysis.html. To run this you first need to run osm_data_wrangling (.ipynb or .py).    
 **osm_analysis.py**               
     - .py version of the analysis document.  
 **osm_experiments_&_notes.ipynb**  
