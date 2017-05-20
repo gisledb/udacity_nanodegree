@@ -44,9 +44,24 @@ bergen = db.bergen
 display(HTML('<b>Count of documents in database:</b>'),bergen.count())
 display(HTML('<b>First record:</b>'))
 pprint(bergen.find_one())
+display(HTML('<b>Document Types:</b>'))
+
+pipeline = [ 
+    { '$group': {'_id': '$type', 'count': { '$sum': 1 } } },
+    {'$sort': {'count': -1 } }
+]
+
+for res in bergen.aggregate(pipeline):
+    print(res['_id'],res['count'])
 
 
 # In[4]:
+
+#Ensuring no other type records, due to previous import error
+bergen.find_one( {'type': {'$nin': ['way','node']} })
+
+
+# In[5]:
 
 #Creating indexes
 
@@ -55,7 +70,7 @@ from pymongo import ASCENDING
 bergen.create_index([('address', ASCENDING),('address.street', ASCENDING),('address.housenumber', ASCENDING)])
 
 
-# In[5]:
+# In[6]:
 
 #Getting count of documents with address field
 
@@ -66,7 +81,7 @@ address_count = address_documents.count()
 display(HTML('<b>Number of addresses in dataset:</b>'),address_count)
 
 
-# In[6]:
+# In[7]:
 
 #Getting counts for streetnames and addresses
 
@@ -94,7 +109,7 @@ print("number of streetnames:", unique_street_count)
 
 # Next I will take a look at the streets with the most addresses on them, to see if any of the top 10 streets are surprising, and if any of the streets have a surprisingly high number of addresses.
 
-# In[7]:
+# In[8]:
 
 #Taking a look at the streets with the most addresses
 
@@ -112,7 +127,7 @@ for street,count in streetnames_sorted_list[0:10]:
 
 # Based on my local knowledge of the area, the list above is not very surprising. None of the streets have a higher number of addresses than I expected.
 
-# In[8]:
+# In[9]:
 
 #Ensuring corrected street names in cleaning script are in fact corrected in the database
 for street,count in streetnames_sorted_list:
@@ -125,7 +140,7 @@ for street,count in streetnames_sorted_list:
         print(street,count)
 
 
-# In[9]:
+# In[10]:
 
 #Ensuring all postcodes starting with 'NO-' are corrected. Expecting 0 results from query.
 for doc in bergen.find( {'address.postcode': {'$regex': 'NO.*'} } ):
@@ -135,7 +150,7 @@ for doc in bergen.find( {'address.postcode': {'$regex': 'NO.*'} } ):
 
 # ### Misspelled street names
 
-# In[10]:
+# In[11]:
 
 #Checking for potential duplicate data due to misspelled street names
 
@@ -177,13 +192,18 @@ def fuzzy_streets(ratio,house_count):
     return fuzzy_matches
 
 
-# In[11]:
+# In[12]:
 
 #Lower than 90 fuzzy ratio gives too many false positives. Same goes for higher than 10 addresses on the street.
 potential_misspellings = fuzzy_streets(92,10)
 
 
-# In[12]:
+# In[13]:
+
+potential_misspellings
+
+
+# In[14]:
 
 #Printing out the potential misspellings
 import pandas as pd
@@ -216,21 +236,52 @@ for spellings in potential_misspellings:
 df_potential_misspellings.drop_duplicates().sort_values('high_spelling',ascending=True)
 
 
-# In[13]:
+# In[15]:
 
 df_misspelled_streets = df_potential_misspellings.loc[[18,13,1,19,6,17,2,22,9,15,12,23,10,16,3]]
+df_misspelled_streets.rename(columns={ 
+    'high_spelling': 'correct_name', 'low_spelling': 'wrong_name' }, inplace=True )
 df_correct_spellings = df_potential_misspellings.loc[8]
 df_spellings_require_research = df_potential_misspellings.loc[[4,7,5,20]]
 
-df_misspelled_streets.to_csv('data/misspelled_streets.csv',index=False)
+df_misspelled_streets[['correct_name','wrong_name']].to_csv(
+    'data/misspelled_streets.csv',index=False)
 df_spellings_require_research.to_csv('data/research_streets_spelling.csv',index=False)
 
 
-# Above I have performed some QA on the street names from the Bergen OSM dataset. I have taken a closer look at the street names with less than 10 house numbers, and I have compared those street with the other street names to spot potential misspelled and duplicate street names. Based on lingual and local knowledge, I have sorted the potential misspelled streetnames into three categories: actual misspelled names, correctly spelled names and names which require more research.
+# In[16]:
+
+df_misspelled_streets
+
+
+# In[17]:
+
+#Getting counts from db again 
+for inx,name in df_misspelled_streets.iterrows():
+    print(name[2],bergen.find( { 'address.street': name[2]}).count() )
+
+
+# In[18]:
+
+#Updating records
+for inx,name in df_misspelled_streets.iterrows():
+    bergen.update_many( { 'address.street': name[2]},
+                  { '$set': {'address.street': name[0] } 
+                  } )
+
+
+# In[19]:
+
+#Ensuring all is corrected. All should return count 0
+for inx,name in df_misspelled_streets.iterrows():
+    print(name[2],bergen.find( { 'address.street': name[2]}).count() )
+
+
+# Above I have performed some QA on the street names from the Bergen OSM dataset. I have taken a closer look at the street names with less than 10 house numbers, and I have compared those street with the other street names to spot potential misspelled and duplicate street names. Based on lingual and local knowledge, I have sorted the potential misspelled streetnames into three categories: actual misspelled names, correctly spelled names and names which require more research. All 3 categories are imported to csv files, and I have corrected the actual misspelled names in the database.
 
 # ### Duplicate addresses
 
-# In[14]:
+# In[20]:
 
 #Finding duplicate addresses
 
@@ -244,15 +295,20 @@ pipeline = [
     { '$match': {'count': {'$gt': 1} } },
     {'$sort' : {'count' : -1} } ]
 
+
 duplicate_addresses = []
+duplicate_addresses_count = 0
 
 for doc in bergen.aggregate(pipeline):
     duplicate_addresses.append(doc)
+    if doc['_id'] != {}:
+        duplicate_addresses_count += doc['count']
 
 print("Number of potential duplicate addresses:", len(duplicate_addresses))
+print("Documents with potential duplicate addresses:", duplicate_addresses_count)
 
 
-# In[15]:
+# In[21]:
 
 #Converting result of duplicate address query to Pandas dataframe for easier view
 
@@ -268,7 +324,7 @@ df_duplicate_addresses = df_duplicate_addresses[['street', 'housenumber', 'count
 df_duplicate_addresses.head(7)
 
 
-# In[16]:
+# In[22]:
 
 #Getting some information about duplicate addresses with different postcodes
 
@@ -284,9 +340,9 @@ print('Duplicate addresses where all the duplicates have unique postcodes:',len(
 df_different_postcodes.sort_values('postcode_count', ascending=False).head(7)
 
 
-# 241 of the 904 potential duplicate addresses are likely not true duplicates, as they have unique postcodes for the address.
+# 242 of the 914 potential duplicate addresses are likely not true duplicates, as they have unique postcodes for the address.
 
-# In[17]:
+# In[23]:
 
 #Function for printing individual address search results
 
@@ -298,13 +354,13 @@ def search_one_address(street, housenumber):
         pprint(doc)
 
 
-# In[18]:
+# In[24]:
 
 #Looking at all documents with the top duplicate address
 search_one_address('Kanalveien','66')
 
 
-# In[19]:
+# In[25]:
 
 #Looking at one of the nodes
 
@@ -317,7 +373,7 @@ bergen.find_one({'id': '4264197029'})
 # 
 # According to the [OSM wiki](http://wiki.openstreetmap.org/wiki/Addresses#How_to_map_addresses), the policy on duplicate addresses is unclear in such cases: "However, there is still some debate on that point (see for example Address information in POI *and* building? on help.openstreetmap.org). Also, the community in some countries has established their own rules."
 
-# In[20]:
+# In[26]:
 
 #Function for checking individual addresses for duplicates
 
@@ -344,7 +400,17 @@ def duplicate_count(street,housenumber, return_list=False):
             return re_list
 
 
-# In[21]:
+# In[27]:
+
+bergen.find_one( {'address.street': 'Smøråshøgda'})
+
+
+# In[28]:
+
+bergen.find_one( {'id': '334326937'})
+
+
+# In[29]:
 
 '''
 Checking for duplicates among the cleaned addresses which had housenumber \
@@ -360,18 +426,29 @@ for i in range(4,11):
     duplicate_count('Vilhelm Bjerknesvei',i)
 
 
-# There are seven documents with address Vilhelm Bjerknesvei 4-10, and no documents for the individual addresses in the 4-10 range (e.g. Vilhelm Bernesvei 7). While this is a data error, the documents with address Vilhelm Bjerknesvei 4-10 are probably not true duplicates.
+# It is not very surprising that Vilhelm Bjerknesvei 4, 6, 7 8, 9 and 10 are missing, as they are probably among the documents which were imported with address Vilhelm Bjerknesvei 4-10. It is however surprising that there are no documents with address Vilhelm Bjerknesvei 4-10 and Smøråshøgda 9. Looking at the identified misspelled street names, I see why this is: they are both among the corrected street names. I will therefore run the queries again with the corrected spellings.
+
+# In[30]:
+
+duplicate_count('Søråshøgda',9)
+#For Vilhelm Bjerknes’ vei checking both individual addresses and range housenumber
+duplicate_count("Vilhelm Bjerknes’ vei",'4-10')
+for i in range(4,11):
+    duplicate_count("Vilhelm Bjerknes’ vei",i)
+
+
+# There are seven documents with address Vilhelm Bjerknes’ vei 4-10, and 2 documents for the individual addresses in the 4-10 range (e.g. Vilhelm Bernesvei 7). While this is a data error, only 2 of the 7 documents with address Vilhelm Bjerknesvei 4-10 are likely to be true duplicates.
 
 # I will take a closer look at the duplicate Laguneveien 1 documents.
 
-# In[22]:
+# In[31]:
 
 #Searching for duplicates of Laguneveien 1
 
 search_one_address('Laguneveien',1)
 
 
-# In[23]:
+# In[32]:
 
 pipeline = [
     { '$match': { 'address.street': 'Laguneveien' } },
@@ -387,7 +464,7 @@ for doc in bergen.aggregate(pipeline):
     pprint(doc)
 
 
-# In[24]:
+# In[33]:
 
 query = { 'address.street': 'Laguneveien', 'address.postcode': '5235', 'address.housenumber': 1 }
 
@@ -395,11 +472,11 @@ for doc in bergen.find(query):
     pprint(doc)
 
 
-# According to The Norwegian Mapping Authority, the correct postal code for Laguneveien is 5239. The 5235 document is incorrect.
+# According to The Norwegian Mapping Authority, the correct postal code for Laguneveien is 5239. The postcode for the 5235 document is incorrect.
 
 # ### Contributors
 
-# In[25]:
+# In[34]:
 
 from collections import defaultdict
 
@@ -479,7 +556,7 @@ print("Mode of contribution count: {0} contributors ({1}%) submitted {2} edit.".
 
 # Based on the difference between the median and the average I suspect that the OSM comunity has a few heavy contributors working on the Bergen data. To further investigate this, I will plot the data.
 
-# In[26]:
+# In[35]:
 
 #Creating dataframe and bins for bar chart
 
@@ -513,11 +590,11 @@ display(df_mode_dict.head(3))
 display(df_mode_dict.tail(3))
 
 
-# In[27]:
+# In[36]:
 
 from matplotlib import pyplot as plt
 import seaborn as sns
-# get_ipython().magic('matplotlib inline')
+get_ipython().magic('matplotlib inline')
 
 for_plot = df_mode_dict.groupby('bracket')['count'].agg('sum')
 
@@ -534,7 +611,7 @@ ax.set_xticklabels(for_plot.index.values,rotation='70',fontsize='small')
 plt.show()
 
 
-# In[28]:
+# In[37]:
 
 total_contributions = 0
 
@@ -546,7 +623,7 @@ for doc in grouped_users:
     
 
 
-# In[29]:
+# In[38]:
 
 # Looking at top 10 contributors
 
@@ -580,14 +657,283 @@ top_10_percentage = round((total_top_10/total_contributions)*100,2)
 print('Total contributions by top 10 contributors: {0}, {1}%'.format(total_top_10,top_10_percentage))
 
 
-# We see here that the large majority of contributions are made by a tiny portion (2.5%) of the contributing users. It seems like a lot of the contributions are automated in some way, as 4 of the top 10 usernames end in "\_import". Any potential contribution patterns these few users have is likely to heavily impact the Bergen OSM data.
+# We see here that the large majority of contributions are made by a tiny portion (2.5%) of the contributing users. It seems like a lot of the contributions are automated in some way, as 3 of the top 10 usernames end in "\_import". Any potential contribution patterns these few users have is likely to heavily impact the Bergen OSM data.
 
 # According to the address page of the OSM wiki, in mid-2014 all Norwegian official addresses were released to the public. Efforts are being made by OSM volunteers to include the released data in OSM, and the progress is being tracked using a tool called [Beebeetle](http://osm.beebeetle.com/addrnodeimportstatus.php). As of March 4, 2017, the Bergen import is listed as 99.83% complete. 1 known address duplicate is listed on the site.
 
-# ### Final Thoughts
+# ### Other Features
+
+# Before summing up my findings related to addresses, street names and users contributions, I'd like to take a look at the distribution of other features in the dataset.
 # 
-# There are 184 address documents without street names in the dataset. Further investigation into those documments is recommended. 
+# Since mongodb is schemaless, I'll have to come up with a way to show all available variables. Since documents with types 'node and 'way' are so different from eachother, I will aggregate them separately.
+
+# In[39]:
+
+node_features = defaultdict(int)
+node_count = 0
+
+for doc in bergen.find({'type': 'node'}):    
+
+    node_count += 1
+    for k,v in doc.items():
+
+        try:
+            for key,val in v.items():
+#             tmp_set.add(k+'_'+key)
+                node_features[k+'.'+key] += 1
+#         else:
+        except AttributeError:
+            if type(v) == list:
+                for item in v:
+                    if type(item) == dict:
+                        for key,val in item.items():
+                            node_features[k+'.'+key] += 1
+                    else:
+                        node_features[k] += 1
+                
+            elif type(v) == str:
+                node_features[k] += 1
+                    
+print("number of node documents:",node_count)
+print("Number of node feature types:",len(node_features))
+
+
+# In[40]:
+
+way_count = 0
+way_features = defaultdict(int)
+
+for doc in bergen.find( {'type': 'way'}):    
+
+    way_count += 1
+    for k,v in doc.items():
+
+        try:
+            for key,val in v.items():
+#             tmp_set.add(k+'_'+key)
+                way_features[k+'.'+key] += 1
+#         else:
+        except AttributeError:
+            if type(v) == list:
+                for item in v:
+                    if type(item) == dict:
+                        for key,val in item.items():
+                            way_features[k+'.'+key] += 1
+                    else:
+                        way_features[k] += 1
+                
+            elif type(v) == str:
+                way_features[k] += 1
+
+print("number of way documents:",way_count)
+print("Number of way feature types:",len(way_features))
+
+
+# In[41]:
+
+# #Commented out as it is not needed
+# pipeline = [
+#     {'$match': {'_type': {'$exists':1 } } },
+#     {'$group': {'_id': {'type': '$type', 'feature_type':'$_type'}, 'count': {'$sum': 1 } } },
+#     {'$sort': {'count': -1}}
+# ]
+    
+# for doc in bergen.aggregate(pipeline):
+#     print(doc)
+
+
+# In[42]:
+
+pprint(way_features)
+
+
+# In[43]:
+
+#Listing the way features sorted by count
+
+for key in sorted(way_features,key=way_features.get,reverse=True):
+    print(key,way_features[key])
+
+
+# In[44]:
+
+pprint(node_features)
+
+
+# In[45]:
+
+#Listing the node features sorted by count
+
+for key in sorted(node_features,key=node_features.get,reverse=True):
+    print(key,node_features[key])
+
+
+# Looking at the counts of features I notice quite a few inconsistencies. For instance, I see multiple instances of website categories.
+
+# In[46]:
+
+print("way website features:")
+for key in way_features:
+    if 'url' in key or 'website' in key:
+        print(key,way_features[key])
+print()
+print("node website features:")
+for key in node_features:
+    if 'url' in key or 'website' in key:
+        print(key,node_features[key])
+
+
+# Here at least 'website', and 'url' can probably be merged into one category. It would be beneficial to the data quality if community efforts are made to clean up inconsistent category use.
+
+# In[47]:
+
+#Looking for potential duplicate email feature types
+print("way email features:")
+for key in way_features:
+    if 'email' in key:
+        print(key,way_features[key])
+print()
+print("node email features:")
+for key in node_features:
+    if 'email' in key:
+        print(key,node_features[key])
+
+
+# In[48]:
+
+#Ensuring there is no good reason to use 2 separate feature types for email
+query = {'email': {'$exists': 1}, 'contact.email': {'$exists': 1} }
+
+for doc in bergen.find(query):
+    print(doc)
+
+
+# Of the two documents which actually have both email and contact.email fields, one of them also have different email addresses listed in the different fields. Although rare, this indicates there is some value in keeping both feature types.
+
+# ### Cuisine and eatery types
+
+# In[49]:
+
+#Most common food served at eatiries in Bergen
+
+#Counts of different type of eateries
+pipeline = [ 
+    {'$match': {'cuisine': { '$exists': 1 } } },
+    { '$group': { 
+        '_id': {'cuisine': '$cuisine' }, 
+        'count': {'$sum': 1 } } 
+    },
+    { '$sort': {'count': -1 } },
+    { '$limit': 10 }
+]
+
+print("Cuisine, all eateries")
+for doc in bergen.aggregate(pipeline):
+    print(doc)
+
+
+pipeline = [ 
+    {'$match': {'amenity': 'restaurant', 'cuisine': {'$exists': 1} } },
+    { '$group': { 
+        '_id': {'cuisine': '$cuisine' }, 
+        'count': {'$sum': 1 } } 
+    },
+    { '$sort': {'count': -1 } },
+    { '$limit': 10 }
+]
+print('    ')
+print("Cuisine, restaurants only")
+for doc in bergen.aggregate(pipeline):
+    print(doc)
+
+
+# We see here that in Bergen restaurants pizza, sushi and chinese food are the top cuisines. Among all eateries with cuisine information, if we exclude coffee_shop, the top 3 cuisines are burger, pizza and sushi.
+
+# In[50]:
+
+#Counts of different type of eateries
+pipeline = [ 
+    {'$match': {'cuisine': { '$exists': 1 } } },
+    { '$group': { 
+        '_id': {'eatery_type': '$amenity' }, 
+        'count': {'$sum': 1 } } 
+    },
+    {'$sort': {'count': -1 } }
+]
+
+for doc in bergen.aggregate(pipeline):
+    print(doc)
+
+
+# The majority of eateries with cuisine information are restaurants, cafés and fast food places.  
+# Interestingly enough, 8 of the documents with cuisine information are not defined as amenities. I will take a closer look at these documents next.
+
+# In[51]:
+
+for doc in bergen.find({'amenity': {'$exists': 0}, 'cuisine': {'$exists': 1} } ):
+    pprint(doc)
+    print('   ')
+
+
+# In[52]:
+
+#Grouping documents above on shop and cuisine
+pipeline = [
+    { '$match': {'amenity': {'$exists': 0}, 'cuisine': {'$exists': 1} } },
+    { '$group': {'_id': {'cuisine': '$cuisine', 'shop type': '$shop'}, 
+                'count': {'$sum': 1 } } }
+]
+
+for res in bergen.aggregate(pipeline):
+    print(res)
+
+
+# All 8 of these non-eatery documents are considered shops, where 4 are bakeries and 4 are convenience shops.
+# 
+# Last in this section, I will generate counts of restaurants, cafės and fast food restaurants with missing cuisine information.
+
+# In[53]:
+
+#Counts of eatery types with cuisine information
+pipeline = [ 
+    {'$match': {'cuisine':{ '$exists': 1 }, 'amenity': {'$in': ['cafe','restaurant', 'fast_food'] } } },
+    { '$group': { 
+        '_id': {'eatery_type': '$amenity' }, 
+        'count': {'$sum': 1 } } 
+    },
+    {'$sort': {'count': -1 } }
+]
+
+print('Eateries with cuisine information')
+for doc in bergen.aggregate(pipeline):
+    print(doc)
+
+print('    ')
+#Counts of eatery types without cuisine information
+pipeline = [ 
+    {'$match': {'cuisine':{ '$exists': 0 }, 'amenity': {'$in': ['cafe','restaurant', 'fast_food'] } } },
+    { '$group': { 
+        '_id': {'eatery_type': '$amenity' }, 
+        'count': {'$sum': 1 } } 
+    },
+    {'$sort': {'count': -1 } }
+]
+
+print('Eateries missing cuisine information')
+for doc in bergen.aggregate(pipeline):
+    print(doc)
+
+
+# Quite a few restaurants, cafés, and fast food places lack cuisine information. Community efforts should be made to improve this.
+
+# ### Final Thoughts and summary
+# 
+# There are 184 address documents without street names in the dataset. Further investigation into those documents is recommended. 
 # 
 # To address the duplicate issue in detail, I suggest following up by looking at the individual duplicate addresses. You could for example start by looking at the three streets with the most individual duplicate addresses to see if there are any useful patterns to be found. Since a few users are very heavy contributors to the Bergen OSM data, it might also be worth searching for user patterns regarding the duplicate addresses.
 # 
 # I would also recommend correcting the misspelled street names, which are stored in data/misspelled_streets.csv, and conduct online research for the street names in data/research_streets_spelling.csv.
+# 
+# There appear to be quite a few potential duplicate fields/feature types in the dataset. Although outside the scope of this project, it would be useful to conduct further analysis and cleanup efforts of duplicate feature types.
+# 
+# About half of the restaurants in the dataset lack cuisine information. This could be a minimal effort task with a high yield result for the active Bergen OSM contributors.
