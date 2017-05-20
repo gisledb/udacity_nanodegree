@@ -1,16 +1,16 @@
-high_spelling,high_count,low_spelling,low_count,fuzz_ratio
-Bønesskogen,222,Børnesskogen,1,96
-C. Sundts gate,53,C.Sundtsgate,2,92
-Dreggsallmenningen,10,Dreggsallmenning,1,94
-Espelandsvegen,76,Espelandsveien,1,93
-Haakon Sheteligs plass,6,Haakon Shetelings plass,2,98
-Hallvardsvegen,14,Halvardsvegen,1,96
-Herman Foss’ gate,9,Herman Foss' gate,1,94
-Lars Hilles gate,26,Lars Hillesgate,1,97
-Nesttunvegen,59,Nesttunveien,3,92
-Siljustølvegen,14,Siljustølveien,1,93
-Torgallmenningen,29,Torgalmenningen,2,97
-Totlandsvegen,211,Totlandsveien,1,92
-Travparkvegen,3,Travparkveien,1,92
-Vestre Murallmenningen,27,Vestre murallmenningen,1,95
-Vilhelm Bjerknes’ vei,111,Vilhelm Bjerknesvei,9,95
+correct_name,wrong_name
+Søråshøgda,Smøråshøgda
+Torgallmenningen,Torgalmenningen
+Dreggsallmenningen,Dreggsallmenning
+Lars Hilles gate,Lars Hillesgate
+Haakon Sheteligs plass,Haakon Shetelings plass
+Vestre Murallmenningen,Vestre murallmenningen
+Herman Foss’ gate,Herman Foss' gate
+Totlandsvegen,Totlandsveien
+Nesttunvegen,Nesttunveien
+Dreggsallmenningen,Dreggsallmenning
+C. Sundts gate,C.Sundtsgate
+Espelandsvegen,Espelandsveien
+Travparkvegen,Travparkveien
+Herman Foss’ gate,Herman Foss' gate
+Vilhelm Bjerknes’ vei,Vilhelm Bjerknesvei
