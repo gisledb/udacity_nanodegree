@@ -1,0 +1,531 @@
+Lesson 3
+========================================================
+
+***
+
+### What to Do First?
+Notes:
+
+***
+
+### Pseudo-Facebook User Data
+Notes:
+
+```{r}
+#Setting styling of plots to the same as in the instructor videos
+theme_set(theme_minimal(24)) 
+#Overriding with my own preference
+theme_set(theme_minimal(14)) 
+```
+
+
+```{r Pseudo-Facebook User Data}
+pf <- read.delim("pseudo_facebook.tsv")
+names(pf)
+```
+```{r}
+summary(pf)
+```
+
+***
+
+### Histogram of Users' Birthdays
+Notes:
+
+```{r Histogram of Users\' Birthdays}
+install.packages('ggplot2')
+library(ggplot2)
+
+qplot(x = dob_day, data = pf, binwidth = 1) + 
+#Setting bins to be 1 for each day of the month
+    scale_x_continuous(breaks=1:31)
+
+#Also possible with ggplot()
+ggplot(aes(x = dob_day), data = pf) + 
+  geom_histogram(binwidth = 1) + 
+  scale_x_continuous(breaks = 1:31)
+```
+
+
+***
+
+#### What are some things that you notice about this histogram?
+Response:
+I notice that a disproportionate amount of users have birthdays on the first day of the month. I suspect this is due to incorrect information entered by the user: the easiest way to fill out date information in a form is to leave the day at 1. 
+
+Fewer users have birthdays on day31, compared to other dates, which makes sense as only 7 out of 12 months in a year have 31 days.
+***
+
+### Moira's Investigation
+Notes:
+There's a mismatch between people's perception of the audience size of their own facebook posts, and the actual audience size.
+***
+
+### Estimating Your Audience Size
+Notes:
+
+***
+
+#### Think about a time when you posted a specific message or shared a photo on Facebook. What was it?
+Response: I posted a short message and shared the "for sale" ad when the neighbors were going to sell their apartment.
+
+#### How many of your friends do you think saw that post?
+Response: 60
+
+#### Think about what percent of your friends on Facebook see any posts or comments that you make in a month. What percent do you think that is?
+Response: 15%
+
+***
+
+### Perceived Audience Size
+Notes:
+Moira says that people dramatically underestimated the size of their audience. They thought it was 25% of what it actually was.
+
+***
+### Faceting
+Notes:
+
+```{r Faceting}
+qplot(x = dob_day, data = pf, binwidth = 1) + 
+  scale_x_continuous(breaks = 1:31) + 
+  facet_wrap(~dob_month, ncol = 3)
+```
+
+#### Let’s take another look at our plot. What stands out to you here?
+Response:
+My previous suspicion is consistent with what we see here: of the users who selected day 1 of the month almost all of them also selected month 1, indicating incorrect user input.
+***
+
+### Be Skeptical - Outliers and Anomalies
+Notes:
+Have to consider anamolies/outliers in the context of your data.
+***
+
+### Moira's Outlier
+Notes:
+#### Which case do you think applies to Moira’s outlier?
+Response:
+
+***
+
+### Friend Count
+Notes:
+
+#### What code would you enter to create a histogram of friend counts?
+
+```{r Friend Count}
+qplot(x = friend_count, data = pf)
+
+#Experimenting to make it better
+qplot(x = friend_count, data = subset(pf, friend_count < 1000), binwidth = 10)
+
+```
+
+#### How is this plot similar to Moira's first plot?
+Response:
+Some outliers have close to 5000 friends, which makes it hard to distinguish the finer differences among the majority of users, which have less than 1000 friends.
+
+Long-tail data.
+
+***
+
+### Limiting the Axes
+Notes:
+
+```{r Limiting the Axes}
+qplot(x = friend_count, data = pf, xlim = c(0, 1000))
+
+#Same plot, different method
+qplot(x = friend_count, data = pf) + 
+  scale_x_continuous(limits = c(0, 1000))
+```
+
+### Exploring with Bin Width
+Notes:
+
+***
+
+### Adjusting the Bin Width
+Notes:
+```{r}
+qplot(x = friend_count, data = pf, binwidth = 25) + 
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50))
+
+#Equivalent ggplot syntax: 
+ggplot(aes(x = friend_count), data = pf) + 
+  geom_histogram(binwidth = 25) + 
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50))
+```
+
+
+### Faceting Friend Count
+```{r Faceting Friend Count}
+# What code would you add to create a facet the histogram by gender?
+# Add it to the code below.
+qplot(x = friend_count, data = pf, binwidth = 10) +
+  scale_x_continuous(limits = c(0, 1000),
+                     breaks = seq(0, 1000, 50)) +
+  facet_wrap(~gender, ncol = 1, strip.position = "bottom")
+
+
+
+```
+
+In the alternate solution below, the period or dot in the formula for facet_grid() represents all of the other variables in the data set. Essentially, this notation splits up the data by gender and produces three histograms, each having their own row.
+```{r}
+qplot(x = friend_count, data = pf) + 
+  facet_grid(gender ~ .) 
+
+#my version
+qplot(x = friend_count, data = pf, binwidth = 10) +
+  scale_x_continuous(limits = c(0, 1000),
+                     breaks = seq(0, 1000, 50)) +
+  facet_grid(gender ~ .)
+
+#Equivalent ggplot syntax: 
+ggplot(aes(x = friend_count), data = pf) + 
+  geom_histogram() + 
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50)) + 
+  facet_wrap(~gender, ncol = 1)
+```
+
+***
+
+### Omitting NA Values
+Notes:
+
+```{r Omitting NA Values}
+qplot(x = friend_count, data = subset(pf, !is.na(gender)) ,binwidth = 10) +
+  scale_x_continuous(limits = c(0, 1000),
+                     breaks = seq(0, 1000, 50)) +
+  facet_wrap(~gender, strip.position = "bottom")
+
+#Equivalent ggplot syntax: 
+ggplot(aes(x = friend_count), data = subset(pf, !is.na(gender))) + 
+  geom_histogram(binwidth = 10) + 
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50)) + 
+  facet_wrap(~gender)
+```
+
+***
+
+### Statistics 'by' Gender
+Notes:
+
+```{r Statistics \'by\' Gender}
+table(pf$gender)
+by(pf$friend_count, pf$gender, summary)
+
+```
+
+#### Who on average has more friends: men or women?
+Response: women
+
+#### What's the difference between the median friend count for women and men?
+Response: 22
+
+#### Why would the median be a better measure than the mean?
+Response:To avoid extreme outliers having to large impact.
+
+***
+
+### Tenure
+Notes:
+
+```{r Tenure}
+qplot(x = tenure, data = pf, binwidth = 30,
+      color = I('black'), fill = I('#099DD9'))
+
+#Equivalent ggplot syntax: 
+ggplot(aes(x = tenure), data = pf) + 
+   geom_histogram(binwidth = 30, color = 'black', fill = '#099DD9')
+```
+
+***
+
+#### How would you create a histogram of tenure by year?
+
+```{r Tenure Histogram by Year}
+qplot(x = (tenure/365), data = pf, binwidth = .25,
+      color = I('black'), fill = I('#099009') ) + 
+  scale_x_continuous(breaks = seq(0, 7, 1), lim = c(0, 7) )
+
+ggplot(aes(x = tenure/365), data = pf) + 
+   geom_histogram(binwidth = .25, color = 'black', fill = '#F79420') + 
+    scale_x_continuous(breaks = seq(1, 7, 1), lim = c(0, 7) )
+
+```
+
+***
+
+### Labeling Plots
+Notes:
+
+```{r Labeling Plots}
+qplot(x = (tenure/365), data = pf, binwidth = .25,
+      color = I('black'), fill = I('#099009'), 
+      xlab = 'Number of years using Facebook', 
+      ylab = 'Number of users in sample') + 
+  scale_x_continuous(breaks = seq(0, 7, 1), lim = c(0, 7) )
+
+#Equivalent ggplot syntax: 
+ggplot(aes(x = tenure / 365), data = pf) + 
+  geom_histogram(color = 'black', fill = '#F79420') + 
+  scale_x_continuous(breaks = seq(1, 7, 1), limits = c(0, 7)) + 
+  xlab('Number of years using Facebook') + 
+  ylab('Number of users in sample')
+```
+
+***
+
+### User Ages
+Notes:
+
+```{r User Ages}
+qplot(x = age, data = pf, binwidth = 1) + 
+  geom_histogram(color = 'black', fill = '#099009') #+ 
+  #scale_x_continuous()
+
+ggplot(aes(x = age), data = pf) + 
+  geom_histogram(color = 'black', fill = '#099009', binwidth = 1) + 
+  scale_x_continuous(breaks = seq(10, 120, 2), lim = c(10, 120))
+
+#From course: Equivalent ggplot syntax: 
+ggplot(aes(x = age), data = pf) + 
+  geom_histogram(binwidth = 1, fill = '#5760AB') + 
+  scale_x_continuous(breaks = seq(0, 113, 5))
+```
+
+#### What do you notice?
+Response:
+Strange outliers: way too many users are 102 and 108 years old.
+There's a strange drop at 22 and 24. 21, 23 and 25 are higher.
+The age mode of the sample is 18, with roughly 5100 users, with 19 and 23 second with roughly 4450 users each.
+The age of the sample is left-skewed (above minimum age).
+No users are under 13, which is due to legal requirements.
+***
+
+### The Spread of Memes
+Notes:
+
+***
+
+### Lada's Money Bag Meme
+Notes:
+
+***
+
+### Transforming Data
+Notes:
+```{r}
+summary(pf$friend_count)
+
+summary(log10(pf$friend_count + 1)) #+1 to avoid infinity due to 0 friends
+
+summary(sqrt(pf$friend_count))
+```
+
+***
+
+### Add a Scaling Layer
+Notes:
+
+```{r Add a Scaling Layer}
+install.packages("gridExtra")
+library(gridExtra)
+
+p1 <- qplot(x = friend_count, data = pf, binwidth=10)
+
+p2 <- qplot(x = friend_count+1, data = pf) + 
+  scale_x_log10() +
+  xlab("Friend count, logarithmic scale")
+
+p3 <- qplot(x = friend_count, data = pf) + 
+  scale_x_sqrt() + 
+  xlab("Friend count, squared values")
+#Alternative square plot
+p4 <- qplot(x = sqrt(friend_count), data = pf)
+#Alternative log plot
+p5 <- qplot(x = log10(friend_count+1), data = pf)
+
+grid.arrange(p1, p2, p3, ncol = 1)
+
+#Alternate solution in ggplot
+p1 <- ggplot(aes(x=friend_count), data = pf) +
+  geom_histogram()
+p2 <- p1 + scale_x_log10()
+p3 <- p1 + scale_x_sqrt()
+
+grid.arrange(p1, p2, p3, ncol = 1)
+
+```
+
+***
+
+
+### Frequency Polygons
+Good for comparing 2 or more distributions at once
+```{r Frequency Polygons}
+#without
+qplot(x = friend_count, data = subset(pf, !is.na(gender)),
+      binwidth = 10) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50) ) + 
+  facet_wrap(~gender)
+
+#with
+qplot(x = friend_count, data = subset(pf, !is.na(gender)),
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50) )
+
+#Using proportions instead of raw count
+qplot(x = friend_count, y = ..count../sum(..count..), 
+      data = subset(pf, !is.na(gender)),
+      xlab = 'Friend Count',
+      ylab = 'Proportions of users with that friend count',
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50) )
+
+#Equivalent ggplot syntax: 
+ggplot(aes(x = friend_count, y = ..count../sum(..count..)), data = subset(pf, !is.na(gender))) + 
+  geom_freqpoly(aes(color = gender), binwidth=10) + 
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50)) + 
+  xlab('Friend Count') + 
+  ylab('Percentage of users with that friend count')
+
+#more accurate, as it shows porportions per color, not of total
+qplot(x = friend_count, y = ..density../sum(..density..), 
+      data = subset(pf, !is.na(gender)),
+      xlab = 'Friend Count',
+      ylab = 'Proportions of users with that friend count',
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50) )
+
+
+```
+
+Quiz:
+```{r}
+#Quick overlook at the data
+summary(pf$www_likes)
+#More detailed percentile distribution
+quantile(pf$www_likes, prob = seq(0, 1, length = 101), type = 5)
+
+
+qplot(x = www_likes, y = ..density../sum(..density..), 
+      data = subset(pf, !is.na(gender)),
+      xlab = 'Likes',
+      ylab = 'Proportions of users with that many likes',
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(1, 208), breaks = seq(0, 208, 10) )
+
+#Solution from video, equivalent ggplot syntax
+ggplot(aes(x = www_likes), data = subset(pf, !is.na(gender))) + 
+  geom_freqpoly(aes(color = gender)) + 
+  scale_x_log10()
+
+```
+
+
+***
+
+### Likes on the Web
+Notes:
+
+```{r Likes on the Web}
+sum(subset(pf, gender == 'male')$www_likes)
+sum(subset(pf, gender == 'female')$www_likes)
+
+#Alternate solution from video
+by(pf$www_likes, pf$gender, sum)
+```
+
+
+***
+
+### Box Plots
+Notes:
+
+```{r Box Plots}
+qplot( x = gender, y = friend_count, 
+       data = subset(pf, !is.na(gender) & friend_count < 1000 ), 
+       geom = 'boxplot' )
+
+#Alternate solution 1 from video
+qplot( x = gender, y = friend_count, 
+       data = subset(pf, !is.na(gender)), 
+       geom = 'boxplot', 
+       ylim = c(0,1000) )
+
+#Alternate solution 2 from video
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+  scale_y_continuous(limits = c(0, 1000))
+
+#Alternate solution 3 from video: most accurate (does nor remove data points)
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+coord_cartesian(ylim = c(0, 1000))
+```
+
+#### Adjust the code to focus on users who have friend counts between 0 and 1000.
+
+```{r}
+#See above
+```
+
+***
+
+### Box Plots, Quartiles, and Friendships
+Notes:
+
+```{r Box Plots, Quartiles, and Friendships}
+qplot(x = gender, y = friend_count, 
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+coord_cartesian(ylim = c(0, 250))
+
+by(pf$friend_count, pf$gender, summary)
+```
+
+#### On average, who initiated more friendships in our sample: men or women?
+Response:
+
+```{r}
+by(pf$friendships_initiated, pf$gender, summary)
+by(pf$friendships_initiated, pf$gender, mean)
+```
+
+#### Write about some ways that you can verify your answer.
+Response:
+```{r Friend Requests by Gender}
+
+qplot(x = gender, y = friendships_initiated, 
+      data = subset(pf, !is.na(gender)), 
+      geom = 'boxplot') + 
+  coord_cartesian(ylim = c(0, 150))
+```
+
+Response:
+I found out which gender on average initiate the most friendships by running the by() function for friendships_initiated and gender. I also took a look at the median and the percentiles, and for both males and females the mean is closer to the 3rd quartile than the median. This seems to be due to some very large outlier users, who have sent out a large amount of friend requests.
+***
+
+### Getting Logical
+Notes:
+
+```{r Getting Logical}
+
+```
+
+Response:
+
+***
+
+### Analyzing One Variable
+Reflection:
+
+***
+
+Click **KnitHTML** to see all of your hard work and to have an html
+page of this lesson, your answers, and your notes!
