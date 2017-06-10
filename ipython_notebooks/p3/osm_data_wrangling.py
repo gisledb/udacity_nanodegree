@@ -1,3 +1,4 @@
+
 # coding: utf-8
 
 # In[1]:
@@ -50,9 +51,7 @@ with open(SAMPLE_FILE, 'wb') as output:
 
 #tag count of dataset
 
-
-
-with open('data/bergen.osm',encoding='utf-8') as f:
+with open('data/bergen.osm') as f:
     tree = ET.parse(f)
     root = tree.getroot()
     
@@ -755,7 +754,7 @@ audit()
 
 # Next I will write functions for making corrections based on the audit results.
 
-# In[37]:
+# In[50]:
 
 
 #!/usr/bin/env python
@@ -791,19 +790,25 @@ def shape_element(element):
         
         for nod in element.iter():  
             tmp_hit = 0
-            
             if element.tag == 'way' and nod.tag == 'nd':
                 node_refs.append(nod.attrib['ref'])
-                
+#             if nod.tag == 'tag':
+#                 if nod.attrib['k'] == 'name':
+#                     print(nod.attrib.items())
+
             for k,v in nod.attrib.items():
-            
+#                   if v[0:4] == 'name':
+#                     print(k,v)
+#                     print(node)
+#                     print('---')
+      
                 if 'k' in nod.keys():
                     node_key = nod.attrib['k']
                     node_val = nod.attrib['v']
                 else:
                     node_key = ''
                     node_val = ''
-            
+
 #                 node_keys = nod.keys()
 #                 node_vals = nod.attrib
 
@@ -853,23 +858,47 @@ def shape_element(element):
                 elif lower_colon.search(node_key):
                     colon_dict[node_key] = node_val
                 
+                #Do not remove. This is for remaining items with 'k' in key, see above for details
+                elif node_key != '' and node_val != '':
+                    #Ensuring type='node' and type='way' is not overwritten
+                    if node_key == 'type':
+                        node['_type'] = node_val
+                    else:
+                        node[node_key] = node_val
+                    
                                 
                 elif k in ('k','v','ref'):
-                    pass
+                    continue
                 
+#                  if v == 'name':
+#                     print(k,v)
+                
+              
                 elif k in CREATED:
                     created[k] = v
-                    
+
                 elif k == 'lat':
                     lat = float(v)
                 elif k == 'lon':
                     lon = float(v)
+                    
+                elif k == 'type':
+                    #Ensuring type='node' and type='way' is not overwritten
+                    node['_type'] = v
 
                 else:    
                     node[k] = v
                     
                     if k == "ref":
                         print("ref",k,v)
+                
+#                 if node_key[0:5] == 'name:':
+#                     print(node_val)
+#                     print(nod.attrib)
+#                     print(k,v)
+#                     print(node)
+#                     print('-----')
+
             
             if 'lat' in nod.attrib.keys():
                 node['pos'] = [lat,lon]
@@ -885,11 +914,26 @@ def shape_element(element):
                     node['address'][key] = address[key]
         
         if len(colon_dict) > 0:
+#             print(colon_dict)
             for k in colon_dict:
+#                 if k[0:4] == 'name' and node['id'] == '58113331':
+#                     print(k,v)
+#                     print(node)
+#                     print('---')
+            
                 k_list = k.rstrip(':').split(':')
                 if len(k_list) ==  2:
-                    node[k_list[0]] = {k_list[1] : colon_dict[k]} 
-        
+                    if k_list[0] not in node:
+                        node[k_list[0]] = {k_list[1] : colon_dict[k]}
+                    elif type(node[k_list[0]]) == list:
+                        node[k_list[0]].append({k_list[1] : colon_dict[k]})
+                    else:
+                        node[k_list[0]] = [ (node[k_list[0]]),{k_list[1] : colon_dict[k]} ]       
+                         
+#                 if k[0:4] == 'name' and node['id'] == '58113331':
+#                     print('POST')
+#                     print(node)
+       
         return node
     else:
         return None
@@ -900,7 +944,7 @@ def process_map(file_in, pretty = False):
     file_out = "{0}.json".format(file_in)
     data = []
     
-    with codecs.open(file_out, "w", encoding="utf-8") as fo:
+    with codecs.open(file_out, "w") as fo:
         
         count = 0
         
@@ -931,7 +975,7 @@ def process_map(file_in, pretty = False):
     return data
 
 
-# In[38]:
+# In[52]:
 
 #process and test sample
 
@@ -981,6 +1025,10 @@ def process_sample(input):
                                     "city": "Bergen",
                                     "postcode": "5035"
                                       }
+        
+#         if row['id'] in ["29099054","58113331"]:
+#             pprint(row)
+#             print('----')
             
 
     #testing ID in previous test exists
@@ -991,7 +1039,7 @@ if __name__ == "__main__":
 
 # Next I'll create and run a function to generate the export file to be imported into MongoDB.
 
-# In[39]:
+# In[53]:
 
 #Process and test Bergen
 def process_bergen(input):
@@ -1049,9 +1097,9 @@ def process_bergen(input):
         if row['id'] == "1652908136":
                 assert row["address"]["housenumber"] == 1
 
-#         if row['id'] == "21641553":
-#             print("FREKHAUG")
-#             print(row)            
+        if row['id'] == "30064640":
+            print("AUTOPASS")
+            pprint(row)            
 
     #testing ID in previous test exists
     assert conrad_id_exists == 1

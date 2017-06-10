@@ -2,7 +2,7 @@
 Project 3 of the Udacity Data Analyst nanodegree. Data wrangling and analysis of Bergen, Norway OSM data, using Python and MongoDB.
 
 ### Primary Files
-**Project Report.html**           
+**Project_Report.html**           
     - Summary of osm_data_wrangling.html and osm_analysis.html. Describes the wrangling process and analysis findings.  
 **osm_analysis.html**             
     - Main analysis document.  
@@ -11,6 +11,8 @@ Project 3 of the Udacity Data Analyst nanodegree. Data wrangling and analysis of
 
 
 ### Other Files
+**Project Report.html**           
+    - Jupyter notebook version of Project_Report.html.  
 **osm_data_wrangling.ipynb**      
     - Jupyter notebook version of osm_data_wrangling.html. To run this you first need to decompress bergen.osm.gz.  
 **osm_data_wrangling.py**         
