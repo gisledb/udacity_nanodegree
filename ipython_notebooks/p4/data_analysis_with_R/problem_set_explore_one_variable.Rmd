@@ -1,0 +1,51 @@
+---
+title: "problem_set:_explore_one_variable"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Loading libraries
+library(ggplot2)
+```
+
+
+```{r}
+#1a
+diamonds
+```
+```{r}
+#1b
+ncol(diamonds)
+
+#1c
+str(diamonds)
+
+#1d
+?diamonds
+```
+
+*1. Quiz*
+a) There are 53490 observations in the dataset
+b) There are 10 variables in the dataset
+c) there are 3 ordered factors in the dataset
+d) D is the letter for the best diamond color
+
+
+*2. Quiz: Price Histogram*
+# Create a histogram of the price of
+# all the diamonds in the diamond data set.
+
+# TYPE YOUR CODE BELOW THE LINE
+# =======================================
+```{r}
+summary(diamonds$price)
+
+qplot(diamonds$price, binwidth = 500) + 
+  scale_x_continuous(limits = c(0,20000), breaks = seq(0, 20000, 500))
+
+```
+

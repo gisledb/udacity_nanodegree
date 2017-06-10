@@ -20,6 +20,8 @@ theme_set(theme_minimal(14))
 
 
 ```{r Pseudo-Facebook User Data}
+
+#Remember to set correct working directory first
 pf <- read.delim("pseudo_facebook.tsv")
 names(pf)
 ```
@@ -33,7 +35,7 @@ summary(pf)
 Notes:
 
 ```{r Histogram of Users\' Birthdays}
-install.packages('ggplot2')
+#install.packages('ggplot2')
 library(ggplot2)
 
 qplot(x = dob_day, data = pf, binwidth = 1) + 
@@ -331,7 +333,7 @@ summary(sqrt(pf$friend_count))
 Notes:
 
 ```{r Add a Scaling Layer}
-install.packages("gridExtra")
+#install.packages("gridExtra")
 library(gridExtra)
 
 p1 <- qplot(x = friend_count, data = pf, binwidth=10)
@@ -515,16 +517,32 @@ I found out which gender on average initiate the most friendships by running the
 Notes:
 
 ```{r Getting Logical}
+summary(pf$mobile_likes)
 
+#You often want to convert features with a lot of 0 values to a binary value (True/False)
+#Logical variable
+summary(pf$mobile_likes > 0)
+
+
+pf$mobile_check_in <- NA
+pf$mobile_check_in <- ifelse(pf$mobile_likes > 0, 1, 0)
+#Making into categorical type
+pf$mobile_check_in <- factor(pf$mobile_check_in)
+summary(pf$mobile_check_in)
+
+#Calculation percentage of checked in users
+summary(pf$mobile_check_in)[2] / nrow(pf)
+#Solution from video
+sum(pf$mobile_check_in == 1) / length(pf$mobile_check_in)
 ```
 
 Response:
-
+64.59%
 ***
 
 ### Analyzing One Variable
 Reflection:
-
+I learned more R syntax. I hadn't really used box plots before, so that was useful. Frequency polygons were also new to me, I liked learning about that. In general I got a refresher in different ways of approcaching (mostly exploratory) data analysis.
 ***
 
 Click **KnitHTML** to see all of your hard work and to have an html
