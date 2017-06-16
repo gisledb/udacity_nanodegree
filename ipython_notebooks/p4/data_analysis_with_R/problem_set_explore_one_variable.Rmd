@@ -44,8 +44,28 @@ d) D is the letter for the best diamond color
 ```{r}
 summary(diamonds$price)
 
-qplot(diamonds$price, binwidth = 500) + 
+qplot(diamonds$price, binwidth = 400) + 
   scale_x_continuous(limits = c(0,20000), breaks = seq(0, 20000, 500))
 
+```
+The shape is left skewed. One of the bins, 400 to 800, is more than twice as large as the second largest bin. The mean of the sample is 3933, while the median is 2401. 
+
+*4. Quiz: Diamond Counts*
+a) How many diamonds cost less than $300?
+```{r}
+nrow(subset(diamonds, price < 500))
+```
+b) How many diamonds cost less than $250?
+```{r}
+nrow(subset(diamonds, price < 250))
+```
+c) How many diamonds cost $15000 or more?
+```{r}
+nrow(subset(diamonds, price >= 15000))
+
+```
+
+```{r}
+subset(diamonds$price, diamonds$price > 300)
 ```
 
