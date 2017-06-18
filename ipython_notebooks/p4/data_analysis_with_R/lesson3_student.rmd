@@ -22,6 +22,8 @@ theme_set(theme_minimal(14))
 ```{r Pseudo-Facebook User Data}
 
 #Remember to set correct working directory first
+
+#setwd('/Users/ggaasemyr/Documents/udacity/ipython_notebooks/p4/data_analysis_with_R')
 pf <- read.delim("pseudo_facebook.tsv")
 names(pf)
 ```
@@ -254,7 +256,7 @@ qplot(x = (tenure/365), data = pf, binwidth = .25,
 
 ggplot(aes(x = tenure/365), data = pf) + 
    geom_histogram(binwidth = .25, color = 'black', fill = '#F79420') + 
-    scale_x_continuous(breaks = seq(1, 7, 1), lim = c(0, 7) )
+    scale_x_continuous(breaks = seq(0, 7, 1), lim = c(0, 7) )
 
 ```
 
