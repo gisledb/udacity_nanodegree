@@ -246,18 +246,416 @@ ggplot(aes(price), data = diamonds) +
 # Submit your final code when you are ready.
 ```{r}
 #first attempt
-ggplot(aes(log10(price)), data = diamonds) + 
+ggplot(aes(log10(price/carat)), data = diamonds) + 
   geom_histogram(binwidth = 0.1) + 
   facet_wrap(~cut)
 
 #more proper way
-ggplot(aes(price), data = diamonds) + 
-  geom_histogram(binwidth = 0.1) + 
+ggplot(aes(price/carat), data = diamonds) + 
+  geom_histogram(binwidth = 0.05, color = 'black') + 
   scale_x_log10() + 
   facet_wrap(~cut) + 
   xlab("Price, logarithmic scale")
 
-[NEXT: MAKE IT INTO PRICE PER CARAT, NOT PRICE]
+```
+*10. Quiz: Price Box Plots*
+# Investigate the price of diamonds using box plots,
+# numerical summaries, and one of the following categorical
+# variables: cut, clarity, or color.
 
+# There won’t be a solution video for this
+# exercise so go to the discussion thread for either
+# BOXPLOTS BY CLARITY, BOXPLOT BY COLOR, or BOXPLOTS BY CUT
+# to share you thoughts and to
+# see what other people found.
+
+# You can save images by using the ggsave() command.
+# ggsave() will save the last plot created.
+# For example...
+#                  qplot(x = price, data = diamonds)
+#                  ggsave('priceHistogram.png')
+
+# ggsave currently recognises the extensions eps/ps, tex (pictex),
+# pdf, jpeg, tiff, png, bmp, svg and wmf (windows only).
+
+# Copy and paste all of the code that you used for
+# your investigation, and submit it when you are ready.
+# =================================================================
+```{r}
+ggplot(aes(x = color, y = price), data = diamonds) +
+  geom_boxplot(fill = c('gray100','gray99','gray98','gray97','gray96','gray95','floralwhite')) + 
+  #  geom_boxplot(fill = c('azure','azure1','ghostwhite','floralwhite','floralwhite','cornsilk','cornsilk')) + 
+  coord_cartesian(ylim = c(0,8000)) + 
+  scale_y_continuous(breaks = seq(0,8000,500))
+
+ggsave('boxplot_diamond_color.png')
+
+by(diamonds$price, diamonds$color, summary)
+
+```
+Purely based on color, the diamond prices seems to fluctuate more for the lower color grade than for the higher grades.
+
+*Quiz 11: Interquartile range - IQR*
+```{r}
+#IQR for diamonds with color D (best color)
+IQR(x = subset(diamonds, color == 'D')$price)
+4214 - 911
+
+#IQR for diamonds with color J (best color)
+IQR(x = subset(diamonds, color == 'J')$price)
+7695 - 1860
+```
+
+*12. Quiz: Price per Carat Box Plots by Color*
+# Investigate the price per carat of diamonds across
+# the different colors of diamonds using boxplots.
+
+# Go to the discussions to
+# share your thoughts and to discover
+# what other people found.
+
+# You can save images by using the ggsave() command.
+# ggsave() will save the last plot created.
+# For example...
+#                  qplot(x = price, data = diamonds)
+#                  ggsave('priceHistogram.png')
+
+# ggsave currently recognises the extensions eps/ps, tex (pictex),
+# pdf, jpeg, tiff, png, bmp, svg and wmf (windows only).
+
+# Copy and paste all of the code that you used for
+# your investigation, and submit it when you are ready.
+
+# SUBMIT YOUR CODE BELOW THIS LINE
+# ===================================================================
+```{r}
+ggplot(aes(x = color, y = price/carat), data = diamonds) +
+  geom_boxplot(fill = c('gray100','gray99','gray98','gray97','gray96','gray95','floralwhite')) + 
+  geom_boxplot(fill = c('azure','azure1','ghostwhite','floralwhite','floralwhite','cornsilk','cornsilk')) + 
+  coord_cartesian(ylim = c(0,6000)) + 
+  scale_y_continuous(breaks = seq(0,6000,500))
+
+by(diamonds$price/diamonds$carat, diamonds$color, summary)
+
+#Best plots from forum
+uniform<-subset(diamonds, cut=="Ideal" & clarity == "IF" & carat > 0.7)
+qplot(y=price/carat, x=color,  data=uniform, geom="boxplot", fill=color)
+uniform<-subset(diamonds, cut=="Ideal" & clarity == "IF")
+
+table(uniform$color)
+qplot(x = color, y = price/carat, 
+data = uniform,
+geom = "boxplot",
+fill = color)
+
+#from forum
+#The code/plot below shows the plot from the original post with a variable box width:
+qplot(x = color, y = price/carat, 
+data = uniform,
+geom = "boxplot", 
+varwidth = TRUE, # added this
+fill = color)
+
+qplot(data = diamonds, x = clarity, y = price/carat,
+xlab = 'Clarity',
+ylab = 'Price',
+geom = 'boxplot',
+fill=color) +
+coord_cartesian(ylim=c(350,18700))
+```
+
+```{r}
+ggplot(aes(x = color, y = carat), data = diamonds) +
+  geom_boxplot(fill = c('gray100','gray99','gray98','gray97','gray96','gray95','floralwhite')) + 
+  geom_boxplot(fill = c('azure','azure1','ghostwhite','floralwhite','floralwhite','cornsilk','cornsilk'))
+ # coord_cartesian(ylim = c(0,6000)) + 
+#  scale_y_continuous(breaks = seq(0,6000,500))
+```
+
+*Quiz 13: Carat Frequency Polygon*
+```{r}
+summary(diamonds$carat)
+
+table(diamonds$carat)
+
+ggplot(aes(x = carat), data = diamonds) + 
+  geom_freqpoly(binwidth = 0.1) + 
+  scale_x_continuous(breaks = seq(0,5,0.1)) +
+  scale_y_continuous(breaks = seq(0,15000,1000))
+
+ggplot(aes(x = friend_count, y = ..count../sum(..count..)), data = subset(pf, !is.na(gender))) + 
+  geom_freqpoly(aes(color = gender), binwidth=10) + 
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50)) + 
+  xlab('Friend Count') + 
+  ylab('Percentage of users with that friend count')
+
+```
+Question focuses on binwidth. 0.3, 0.8 and 1.01 has a count above 2000, the rest of the options do not.
+
+=========================================
+*Data Wrangling with R*
+Full preso at https://s3.amazonaws.com/udacity-hosted-downloads/ud651/DataWranglingWithR.pdf
+```{r}
+library(dplyr)
+#install.packages('devtools')
+#devtools::install_github('rstudio/EDAWR')
+library(EDAWR)
+
+#These do the same thing
+select(tb, child:elderly)
+tb %>% select(child:elderly)
+
+storms
+storms$storm
+
+names(cases)[-1]
+unlist(cases[1:3, 2:4])
+
+storms$pressure / storms$wind
+
+```
+Tidy data
+1. Each variable is stored in its own column.
+2. Each observation is saved in its own row.
+3. Each "type" of observation stored in a single table (here, storms).
+
+tidyr
+-A package that reshapes the layout of tables
+-Two main functions: gather() and spread()
+
+```{r}
+#install.packages("tidyr")
+library(tidyr)
+?gather
+?spread
+```
+
+Gather
+Collapses multiple columns into two columns:
+1. a *key* column that contains the former column names
+2. a *value* column that contains the former column cells
+```{r}
+cases
+gather(cases, "year","n", 2:4)
+```
+
+Spread
+1. Each unique value in the *key* column becomes a column name
+2. each value in the *value* column becomes a cell in the new columns
+```{r}
+pollution
+spread(pollution, size, amount)
+```
+
+unite() and separate()
+```{r}
+?unite
+?separate
+```
+
+Separate
+Separate splits a column by a character string separator.
+```{r}
+storms
+storms2 <- separate(storms, date, c("year", "month", "day"), sep = "-")
+storms2
+```
+
+Unite
+Unite unites columns into a single column.
+```{r}
+unite(storms2, date, year, month, day, sep = "-")
+```
+
+dplyr: A package that helps transform tabular data.
+
+```{r}
+library(dplyr)
+?select()  # Extract existing variables
+?filter()  # Extract existing observations
+?arrange  
+?mutate    # Derive new variables (from existing variables)
+?summarise # Change the unit of analysis
+?group_by
+```
+
+nycflights13
+Data sets related to flights that departed from NYC in 2013
+```{r}
+#install.packages("nycflights13")
+library(nycflights13)
+
+?airlines
+?airports
+?flights
+?planes
+?weather
+```
+
+Select
+Useful select functions:
+contains(), ends_with(), everything(), matches(), 
+num_range(), one_of(), starts_with()
+```{r}
+#similar to SQL: place 1 is table, rest is columns
+select(storms, storm, pressure)
+#all but
+select(storms, -storm)
+#from column to column
+select(storms, wind:date)
+
+```
+
+Filter
+```{r}
+#Select with WERE clause
+filter(storms, wind >= 50)
+filter(storms, wind >= 50, 
+       storm %in% c("Alberto", "Alex", "Allison"))
+```
+
+Mutate
+```{r}
+#Adds new column
+mutate(storms, ratio = pressure / wind)
+mutate(storms, ratio = pressure / wind, inverse = ratio ^-1)
+```
+
+Summarise
+```{r}
+pollution %>% summarise(median = median(amount), variance = var(amount))
+pollution %>% summarise(mean = mean(amount), sum = sum(amount), n = n())
+```
+
+Arrange
+```{r}
+#Sorts by wind column
+arrange(storms, wind)
+arrange(storms, desc(wind))
+#Sorts by wind, then by date
+arrange(storms, wind, date)
+```
+
+Useful use of pipe operator %>%
+Shortcut on mac: cmd + shift + M
+```{r}
+storms %>% filter(wind >= 50) %>% select(storm, pressure)
+```
+
+*Unit of Analysis*
+```{r}
+pollution %>% group_by(city)
+pollution %>% group_by(city) %>% 
+  summarise(mean = mean(amount), sum = sum(amount), n = n())
+
+#by size
+pollution %>% group_by(size) %>% summarise(mean = mean(amount))
+
+#Ungroup
+pollution %>% ungroup()
+
+tb %>% group_by(country, year) %>% 
+  summarise(cases = sum(child))
+
+tb %>% group_by(country, year) %>% 
+  summarise(cases = sum(child)) %>%
+  summarise(cases = sum(cases))
+
+```
+
+*Joining Data*
+
+dplyr::bind_cols()
+```{r}
+y
+z
+bind_cols(y, z)
+```
+
+dplyr::bind_rows()
+```{r}
+bind_rows(y, z)
+```
+
+dplyr::union()
+```{r}
+union(y, z)
+```
+
+dplyr::intersect()
+```{r}
+intersect(y, z)
+```
+
+dplyr::setdiff()
+```{r}
+setdiff(y, z)
+```
+
+dplyr::left_join()
+```{r}
+songs
+artists
+left_join(songs, artists, by = 'name')
+
+left_join(songs2, artists2, by = c("first", "last"))
+```
+
+dplyr::inner_join()
+```{r}
+inner_join(songs, artists, by = 'name')
+```
+
+dplyr::semi_join()
+```{r}
+#Only returns columns from left table, matches same as inner join
+semi_join(songs, artists, by = 'name')
+```
+
+dplyr::anti_join()
+```{r}
+#left join where b.key IS NULL
+anti_join(songs, artists, by = 'name')
+```
+=========================================
+
+*15. Quiz: Gapminder Data*
+# The Gapminder website contains over 500 data sets with information about
+# the world's population. Your task is to download a data set of your choice
+# and create 2-5 plots that make use of the techniques from Lesson 3.
+
+# You might use a simple histogram, a boxplot split over a categorical variable,
+# or a frequency polygon. The choice is yours!
+
+# You can find a link to the Gapminder website in the Instructor Notes.
+
+# Once you've completed your investigation, create a post in the discussions that includes:
+#       1. any questions you answered, your observations, and summary statistics
+#       2. snippets of code that created the plots
+#       3. links to the images of your plots
+
+# You can save images by using the ggsave() command.
+# ggsave() will save the last plot created.
+# For example...
+#                  qplot(x = price, data = diamonds)
+#                  ggsave('priceHistogram.png')
+
+# ggsave currently recognises the extensions eps/ps, tex (pictex),
+# pdf, jpeg, tiff, png, bmp, svg and wmf (windows only).
+
+# Copy and paste all of the code that you used for
+# your investigation, and submit it when you are ready.
+# ====================================================================================
+
+```{r}
+#setwd("/Users/ggaasemyr/Documents/udacity/ipython_notebooks/p4/data_analysis_with_R/")
+
+fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1, check.names = F)
+
+
+ggplot(aes(x = rownames(fertility), y = '2015'), data = fertility) + 
+  geom_boxplot()
+
+fertility$'2015'
 ```
 
