@@ -653,9 +653,62 @@ anti_join(songs, artists, by = 'name')
 fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1, check.names = F)
 
 
-ggplot(aes(x = rownames(fertility), y = '2015'), data = fertility) + 
-  geom_boxplot()
+pollution
+
+ggplot(aes(x = city, y = pollution$'amount'), data = pollution) + 
+  geom_point()
+
+ggplot(aes(x = rownames(fertility), y = fertility$'2015'), data = fertility) + 
+  geo()
 
 fertility$'2015'
+
+qplot(fertility$'2015', data = fertility)
+
+summary(fertility$'2015')
+
+View(fertility[-3])
+
+
+fertility_mean_by_year = colMeans(fertility, na.rm = T)
+
+ggplot(aes(x = ind, y = values), data = stack(fertility)) + 
+  geom_boxplot() + 
+  scale_y_continuous()
+
+ggplot(aes(x = values), data = stack(fertility)) + 
+  geom_bar()
+
+ggplot(aes(x = city), data = pollution) + 
+  geom_bar()
+
+ggplot(aes(x))
+
+stack((fertility_mean_by_year))
+
+ggplot(aes(x = ind, y = values), data = stack((fertility_mean_by_year))) + 
+  geom_line()
+
+?stack(fertility)
+
+ggplot(aes(x = ind, y = values, group = 1, color = I('blue')), data = stack(fertility_mean_by_year)) +
+  geom_line() 
+
+ggplot(aes(x = ind, y = values, color = I('black')), fill = rgb(r,g,b), data = stack(fertility)) +
+  geom_boxplot() 
+
+fertility[200:215]
+
+
+#CONTINUE ON THIS
+summary(fertility$'2015')[5] - summary(fertility$'2015')[2]
+
+summary(fertility$'2015')[5,]
+summary(fertility$'2015')[2,]
+
+3.495-1.785
+
+ggplot(stack(fertility[200:215]), aes(x = ind, y = values)) + 
+  geom_boxplot()
 ```
 
