@@ -710,5 +710,32 @@ summary(fertility$'2015')[2,]
 
 ggplot(stack(fertility[200:215]), aes(x = ind, y = values)) + 
   geom_boxplot()
+
+install.packages("countrycode")
+library(countrycode)
+
+countrycode(c('norway','usa'),'country.name','region')
+
+countrycode(row.names(fertility),'country.name','region')
+
+?countrycode_data()
+
+fertility$continent <- countrycode(row.names(fertility),'country.name','continent')
+fertility$region <- countrycode(row.names(fertility),'country.name','region')
+
+fertility[(length(fertility)-2):length(fertility)]
+
+View(tail(countrycode_data))
+
+fertility[2:3]
+
+list(row.names(fertility))# typeof(fertility)
+
+View(filter(countrycode_data,cowc == 'USA'))
+
+distinct(countrycode_data,eurocontrol_pru)
+distinct(countrycode_data,region)
+distinct(countrycode_data,continent)
+
 ```
 
