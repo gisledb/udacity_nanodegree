@@ -519,6 +519,7 @@ Mutate
 #Adds new column
 mutate(storms, ratio = pressure / wind)
 mutate(storms, ratio = pressure / wind, inverse = ratio ^-1)
+
 ```
 
 Summarise
@@ -808,9 +809,67 @@ distinct(countrycode_data,continent)
 
 ```{r}
 friend_birthdays <- read.csv("fb_friend_birthdays.csv")
+#Have to convert to POSIXct due to error message
+friend_birthdays$date <- as.POSIXct(strptime(friend_birthdays$Start, format = "%m/%d/%y %H:%M"))
+#Creating column without year
+friend_birthdays$MonthDay <- format(friend_birthdays$date, format = "%m-%d")
+```
+Q1: How many people share your birthday? Do you know them?
+```{r}
 
-friend_birthdays$date = strptime(friend_birthdays$Start, format = "%m/%d/%y %H:%M")
+#Filtering to my birthday
+my_birthday <- filter(friend_birthdays, MonthDay == "12-11")
+#Getting count
+my_birthday %>% summarise(n = n())
+```
 
-qplot(friend_birthdays$date, bins=365)
+Q2: Which month contains the most number of birthdays?
+```{r}
+#Creating columns for month and day
+friend_birthdays <- separate(friend_birthdays,MonthDay, c("Month","Day"))
+#Changing Month column to use abreviated month name
+friend_birthdays$Month <- month.abb[as.numeric(friend_birthdays$Month)]
+
+month_counts = count(friend_birthdays, Month) %>%
+  arrange(desc(n))
+#Top month
+month_counts[1,]
+```
+
+Q3: How many birthdays are in each month?
+```{r}
+#Creating sort variable
+sorted_by_month = sort(factor(friend_birthdays$Month,levels = month.abb))
+
+ggplot(aes(x=sorted_by_month), data = friend_birthdays) + 
+#using match() to make the variable continous for fill gradient
+  geom_bar(aes(fill = match(sorted_by_month,month.abb)))  +
+  scale_fill_gradient(low="springgreen3", high="springgreen4", guide = FALSE) +
+  ggsave("P3Q16Q4.png")
+```
+
+Q4: Which day of the year has the most number of birthdays?
+```{r}
+count_per_day <- friend_birthdays %>% group_by(Month,Day) %>% 
+  summarise(n = n()) %>%
+  arrange(desc(n))
+
+#Day with most birthdays
+count_per_day[1:8,]
+
+#For plotting
+MonthDay <- unite_(friend_birthdays,"MonthDay",c("Month","Day"),sep = " ")$MonthDay
+
+ggplot(aes(x=MonthDay), data = friend_birthdays) + 
+  geom_bar() + 
+  scale_x_date()
+
+?scale_x_discrete(breaks = )  
+#  ggsave("P3Q16Q5.png")
+```
+
+Q5: Do you have at least 365 friends that have birthdays on everyday of the year?
+```{r}
+length(unique(MonthDay))
 ```
 
