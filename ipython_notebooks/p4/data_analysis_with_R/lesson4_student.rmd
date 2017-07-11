@@ -1,0 +1,341 @@
+Lesson 4
+========================================================
+
+***
+
+### Scatterplots and Perceived Audience Size
+Notes:
+
+***
+
+### Scatterplots
+Notes:
+
+```{r Scatterplots}
+library(ggplot2)
+
+pf <- read.csv('pseudo_facebook.tsv', sep = '\t')
+
+qplot(x = age, y = friend_count, data = pf)
+#Don't need to specify x and y in qplot
+qplot(age, friend_count, data = pf)
+#Equivalent with ggplot syntax
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_point()
+```
+
+***
+
+#### What are some things that you notice right away?
+Response:
+The people with the higher friend counts tends to be younger than 28 years old. There's a strange spike around 110 years old.
+***
+
+### ggplot Syntax
+Notes:
+Instructor recommends adding one layer at a time when building plots, for easier debugging
+
+```{r ggplot Syntax}
+summary(pf$age)
+
+#Equivalent with ggplot syntax
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_point() +
+  xlim(13,90)
+```
+
+***
+
+### Overplotting
+Notes:
+When too many points are overlapping.
+```{r Overplotting}
+ggplot(aes(x = age, y = friend_count), data = pf) +
+#Making each point on the chart equal to 20 data points
+      geom_point(alpha = 1/20) +
+  xlim(13,90)
+
+#jitter geom adds a small amount of random variation to the location of each point.
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_jitter(alpha = 1/20) +
+  xlim(13,90)
+
+```
+
+#### What do you notice in the plot?
+Response:
+There are more users in general under 25. The data is left skewed.
+It is now easier to see that younger users does not have that many more friends than older users.
+***
+
+### Coord_trans()
+Notes:
+
+```{r Coord_trans()}
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_jitter(alpha = 1/20) +
+  xlim(13,90)
+  
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_point(alpha = 1/20) +
+  xlim(13,90) +
+  coord_trans(x = "log10") +
+  geom_smooth()
+```
+
+#### Look up the documentation for coord_trans() and add a layer to the plot that transforms friend_count using the square root function. Create your plot!
+
+```{r}
+#See above
+```
+
+#### What do you notice?
+40something percent seems to be under 30 years old. 13 year olds have relatively many friends, and then there's a slow decline in friend count to around 20, when the decline becomes more rapid until 30. From 30 to 50 the friend count is pretty stable, and rises slowly from 50 to 80, and at 80 the count is about the same as at 28. From 80 to 90 there's a rapid increase, ending up at the same level as 13 year olds. We can speculate that this is due to some under 20 year olds using a false age of 80+ on their profile.
+
+Answer from video:
+```{r}
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_point(alpha = 1/20) +
+  xlim(13,90) +
+  coord_trans(y = "sqrt")
+```
+It is now easier to see the distribution of friend count conditional on age. For example, we can see thresholds of friend count above where there are very few users.
+***
+
+### Alpha and Jitter
+Notes:
+
+```{r Alpha and Jitter}
+ggplot(aes(x = age, y = friend_count), data = pf) +
+  geom_point(alpha = 1/20, position = position_jitter(h = 0)) +
+  xlim(13,90) +
+  coord_trans(y = "sqrt")
+```
+**QUIZ**
+# Examine the relationship between
+# friendships_initiated (y) and age (x)
+# using the ggplot syntax.
+
+# We recommend creating a basic scatter
+# plot first to see what the distribution looks like.
+# and then adjusting it by adding one layer at a time.
+
+# What are your observations about your final plot?
+
+# Remember to make adjustments to the breaks
+# of the x-axis and to use apply alpha and jitter.
+
+***
+```{r}
+summary(pf[,c("age","friendships_initiated","friend_count")])
+
+ggplot(aes(x = age, y = friendships_initiated), data = pf) +
+  geom_point()
+
+ggplot(aes(x = friendships_initiated, y = friend_count), data = pf) +
+  geom_point() +
+  xlim(0,1000) +
+#  scale_x_continuous(breaks = seq(0,1000,100) +
+#  coord_trans(y="sqrt") +
+  geom_smooth()
+
+
+```
+
+### Overplotting and Domain Knowledge
+Notes:
+
+***
+
+### Conditional Means
+Notes:
+
+```{r Conditional Means}
+
+```
+
+Create your plot!
+
+```{r Conditional Means Plot}
+
+```
+
+***
+
+### Overlaying Summaries with Raw Data
+Notes:
+
+```{r Overlaying Summaries with Raw Data}
+
+```
+
+#### What are some of your observations of the plot?
+Response:
+
+***
+
+### Moira: Histogram Summary and Scatterplot
+See the Instructor Notes of this video to download Moira's paper on perceived audience size and to see the final plot.
+
+Notes:
+
+***
+
+### Correlation
+Notes:
+
+```{r Correlation}
+
+```
+
+Look up the documentation for the cor.test function.
+
+What's the correlation between age and friend count? Round to three decimal places.
+Response:
+
+***
+
+### Correlation on Subsets
+Notes:
+
+```{r Correlation on Subsets}
+with(                 , cor.test(age, friend_count))
+```
+
+***
+
+### Correlation Methods
+Notes:
+
+***
+
+## Create Scatterplots
+Notes:
+
+```{r}
+
+```
+
+***
+
+### Strong Correlations
+Notes:
+
+```{r Strong Correlations}
+
+```
+
+What's the correlation betwen the two variables? Include the top 5% of values for the variable in the calculation and round to 3 decimal places.
+
+```{r Correlation Calcuation}
+
+```
+
+Response:
+
+***
+
+### Moira on Correlation
+Notes:
+
+***
+
+### More Caution with Correlation
+Notes:
+
+```{r More Caution With Correlation}
+install.packages('alr3')
+library(alr3)
+```
+
+Create your plot!
+
+```{r Temp vs Month}
+
+```
+
+***
+
+### Noisy Scatterplots
+a. Take a guess for the correlation coefficient for the scatterplot.
+
+b. What is the actual correlation of the two variables?
+(Round to the thousandths place)
+
+```{r Noisy Scatterplots}
+
+```
+
+***
+
+### Making Sense of Data
+Notes:
+
+```{r Making Sense of Data}
+
+```
+
+***
+
+### A New Perspective
+
+What do you notice?
+Response:
+
+Watch the solution video and check out the Instructor Notes!
+Notes:
+
+***
+
+### Understanding Noise: Age to Age Months
+Notes:
+
+```{r Understanding Noise: Age to Age Months}
+
+```
+
+***
+
+### Age with Months Means
+
+```{r Age with Months Means}
+
+```
+
+Programming Assignment
+```{r Programming Assignment}
+
+```
+
+***
+
+### Noise in Conditional Means
+
+```{r Noise in Conditional Means}
+
+```
+
+***
+
+### Smoothing Conditional Means
+Notes:
+
+```{r Smoothing Conditional Means}
+
+```
+
+***
+
+### Which Plot to Choose?
+Notes:
+
+***
+
+### Analyzing Two Variables
+Reflection:
+
+***
+
+Click **KnitHTML** to see all of your hard work and to have an html
+page of this lesson, your answers, and your notes!
+
