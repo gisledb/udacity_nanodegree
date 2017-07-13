@@ -130,16 +130,36 @@ ggplot(aes(x = age, y = friend_count), data = pf) +
 summary(pf[,c("age","friendships_initiated","friend_count")])
 
 ggplot(aes(x = age, y = friendships_initiated), data = pf) +
-  geom_point()
+  geom_point(alpha = 1/20, position = position_jitter(h = 0) ) +
+  scale_x_continuous(limits = c(13,90), breaks = seq(10,100,10)) +
+  scale_y_continuous(breaks = seq(0,4000,100)) +
+  coord_trans(y = "sqrt") +
+  geom_smooth() +
+  ggsave("L5Q7.png",limitsize = TRUE)
 
+#Adding my own, using more interesting variables for comparison
 ggplot(aes(x = friendships_initiated, y = friend_count), data = pf) +
   geom_point() +
-  xlim(0,1000) +
-#  scale_x_continuous(breaks = seq(0,1000,100) +
-#  coord_trans(y="sqrt") +
-  geom_smooth()
+  scale_x_continuous(limits = c(0,1000),breaks = seq(0,1000,100)) +
+  scale_y_continuous(breaks = seq(0,4000,100)) +
+  coord_trans(y="sqrt") +
+  geom_smooth() 
 
+library(dplyr)
+age_13_to_25 <- filter(pf,age<26,age>13)
+age_41_to_50 <- filter(pf,age<50,age>40)
+age_81_to_90 <- filter(pf,age<90,age>80)
 
+summary(age_13_to_25$friendships_initiated)
+summary(age_41_to_50$friendships_initiated)
+summary(age_81_to_90$friendships_initiated)
+```
+The observations here are similar to the scatterplot with age and friend_count: The younger users (about 25 and younger) have both a larger range and a higher average of friendships_initiated than older users. The user group between 80 and 90 years old shows a similar trend. There are less users in this age range, 817, but still far many enough to be statistically significant.
+```{r}
+#Answer from video
+ggplot(aes(x = age, y = friendships_initiated), data = pf) +
+  geom_jitter(alpha = 1/10, position = position_jitter(h = 0) ) +
+  coord_trans(y = "sqrt")
 ```
 
 ### Overplotting and Domain Knowledge
@@ -151,12 +171,55 @@ Notes:
 Notes:
 
 ```{r Conditional Means}
+library(dplyr)
+
+filter()
+
+#Grouping by age, adding to new variable
+age_groups <- group_by(pf, age)
+
+#summarising friend count for the age groups
+pf.fc_by_age <- summarise(age_groups,
+          friend_count_mean = mean(friend_count),
+          friend_count_median = median(friend_count),
+          n = n())
+#Sorting by age
+pf.fc_by_age <- arrange(pf.fc_by_age, age)
+
+#Same as above, using pipe operator
+pf.fc_by_age <- group_by(pf, age) %>% 
+  summarise(friend_count_mean = mean(friend_count),
+          friend_count_median = median(friend_count),
+          n = n()) %>% 
+  arrange(age)
+  
+pf.fc_by_age
 
 ```
 
-Create your plot!
+Create your plot! Plotting mean friend count for the age groups.
 
 ```{r Conditional Means Plot}
+
+ggplot() + 
+  geom_line(aes(x = age, y = friend_count_mean), data = pf.fc_by_age,color = 'blue') +
+  scale_x_continuous(breaks = seq(10,110,5)) +
+  scale_y_continuous(breaks = seq(0,500,50))
+
+ggplot(economics_long, aes(date, value01, colour = variable)) +
+  geom_line()
+
+ggplot(tmp_bah, aes(age, count, colour = desc_type)) +
+  geom_line()
+
+economics_long
+#BONUS, for myself:
+library(tidyr)
+#combining mean and median, sort of. For plotting purposes.
+tmp bah <- gather(pf.fc_by_age,desc_type,count,-age,-n)
+
+ggplot(tmp_bah, aes(age, count, colour = desc_type)) +
++   geom_line()
 
 ```
 
@@ -166,11 +229,46 @@ Create your plot!
 Notes:
 
 ```{r Overlaying Summaries with Raw Data}
+ggplot(aes(x = age, y = friendships_initiated), data = pf) +
+  geom_point(alpha = 0.05, position = position_jitter(h = 0), color = 'orange' ) +
+  scale_x_continuous(limits = c(13,90), breaks = seq(10,100,10)) +
+  scale_y_continuous(breaks = seq(0,4000,100)) +
+  coord_trans(y = "sqrt") + 
+  #adding line.
+  geom_line(stat = "summary", fun.y = mean) + 
+  #adding quantile for bottom 10%
+  geom_line(stat = "summary", fun.y = quantile, fun.args = list(probs = .1), 
+            linetype = 2, color = 'blue') +
+  #adding quantile for bottom 90%
+  geom_line(stat = "summary", fun.y = quantile, fun.args = list(probs = .9), 
+            linetype = 2, color = 'black') +
+  #adding quantile for bottom 50% (AKA median)
+  geom_line(stat = "summary", fun.y = quantile, fun.args = list(probs = .5), 
+            linetype = 1, color = 'blue')
+  
+#Gives us some more knowledge, but the spread is still unclear
 
 ```
 
 #### What are some of your observations of the plot?
 Response:
+The mean is consistently quite higher than the median for all age groups, indicating the presence of some large outliers. 
+
+Observations from answer:
+Having more than 1000 friends is quite rare, including for younger users. the 9- percentile is never above 500.
+```{r}
+ggplot(aes(x = age, y = friendships_initiated), data = pf) +
+  geom_point(alpha = 0.05, position = position_jitter(h = 0), color = 'orange' ) +
+  #adding coord cartesian
+  coord_cartesian(xlim = c(13,70),ylim = c(0,1000)) +
+  geom_line(stat = "summary", fun.y = mean) + 
+  geom_line(stat = "summary", fun.y = quantile, fun.args = list(probs = .1), 
+            linetype = 2, color = 'blue') +
+  geom_line(stat = "summary", fun.y = quantile, fun.args = list(probs = .9), 
+            linetype = 2, color = 'black') +
+  geom_line(stat = "summary", fun.y = quantile, fun.args = list(probs = .5), 
+            linetype = 1, color = 'blue')
+```
 
 ***
 
@@ -185,6 +283,10 @@ Notes:
 Notes:
 
 ```{r Correlation}
+cor.test(pf$age,pf$friend_count)
+
+#alternative way
+with(pf, cor.test(age, friend_count))
 
 ```
 
@@ -192,27 +294,39 @@ Look up the documentation for the cor.test function.
 
 What's the correlation between age and friend count? Round to three decimal places.
 Response:
-
+-0.0274
 ***
 
 ### Correlation on Subsets
 Notes:
 
 ```{r Correlation on Subsets}
-with(                 , cor.test(age, friend_count))
+with(subset(pf, age >= 13 & age <=70 & 
+              friend_count <= 1000 & friend_count >= 0), cor.test(age, friend_count))
+
+with(subset(pf, age <=70), cor.test(age, friend_count))
 ```
 
 ***
 
 ### Correlation Methods
 Notes:
-
+Plots give a richer understanding of correlation than what statistical tests (r, rho, tau) do.
 ***
 
 ## Create Scatterplots
 Notes:
 
 ```{r}
+ggplot(aes(x = www_likes_received, y = likes_received), data = pf) + 
+  geom_point(color = 'orange') +
+  geom_line(stat = 'summary', fun.y = mean)
+
+ggplot(aes(x = age, y = friendships_initiated), data = pf) +
+  geom_point(alpha = 0.05, position = position_jitter(h = 0), color = 'orange' ) +
+  #adding coord cartesian
+  #coord_cartesian(xlim = c(13,70),ylim = c(0,1000)) +
+  geom_line(stat = "summary", fun.y = mean)
 
 ```
 
