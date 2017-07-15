@@ -452,7 +452,7 @@ Mitchell$year <- factor(Mitchell$year)
 
 ggplot(aes(x = match(Mitchell$Month_name,month.name), y = Temp, color = fyear), data = Mitchell) +
   geom_point() +
-  geom_line() +
+#  geom_line() +
   scale_x_continuous(breaks = seq(1,12,1))
 
 cor.test(Mitchell$Temp,as.numeric(Mitchell$year))
@@ -615,17 +615,21 @@ p2 <- ggplot(data = subset(pf.fc_by_age_months, age_with_months < 71),
 
 grid.arrange(p2, p1, p3, ncol = 1)
 ```
-
+For p1, the smoother does not draw attention to the "non-matonic relationship" in the low ages, and it really misses the discontinuity at age 69. This highlights that using models like Loess or smoothing lines can be useful, but like almost any model can be subject to systematic errors when the true process generating our data is not so consistent with the model itself.
 ***
 
 ### Which Plot to Choose?
 Notes:
-
+For exploratory analysis, you don't need to choose one plot type. Part of the process is to visualize the data in different ways. But when it comes to presenting your findings and/or the data, one or two visualizations should be chosen.
 ***
 
 ### Analyzing Two Variables
 Reflection:
+I have learned more about scatter plots, and how to create them with various features using ggplot(). I have gotten to use dplyr more for data wrangling, and have touched on using colors as a way to visualize 3-dimensions on a plot. Sometimes to make sense of data, the data first have to be transformed into different units (e.g. month number in experiment converted to month of the year).
 
+From instructor:
+We learned how to explore the relationship between two variables
+Learned about benefits and limitations of using correlation between two 
 ***
 
 Click **KnitHTML** to see all of your hard work and to have an html
