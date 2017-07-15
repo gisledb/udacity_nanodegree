@@ -629,7 +629,7 @@ I have learned more about scatter plots, and how to create them with various fea
 
 From instructor:
 We learned how to explore the relationship between two variables
-Learned about benefits and limitations of using correlation between two 
+Learned about benefits and limitations of using correlation to understand the relationship between two variables. 
 ***
 
 Click **KnitHTML** to see all of your hard work and to have an html
