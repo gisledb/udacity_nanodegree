@@ -414,3 +414,59 @@ library(wpp2015)
 
 ```
 
+```{r}
+#Same as above, necessary only
+library(ggplot2)
+#install.packages('tibble')
+library(tibble)
+
+#Loading data
+fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1)
+#Adding column for Country, for easier wrangling
+fertility <- rownames_to_column(fertility, var = "country")
+
+#Getting initial overview of fertility rates per country in 2015
+ggplot(aes(x = country, y = fertility$'2015'), data = fertility) + 
+  geom_point()
+
+#install.packages("countrycode")
+library(countrycode)
+
+fertility$continent <- countrycode(fertility$country,'country.name','continent')
+fertility$region <- countrycode(fertility$country,'country.name','region')
+
+#Taking a look at countries in region central America, comparing to Wikipedia for North America
+subset(fertility, region == 'Central America')$country
+
+unique(subset(fertility, continent == 'Americas')$region)
+
+#Dividing continent "Americas" into North and South
+fertility$continent[fertility$region == 'South America'] <- 'South America'
+fertility$continent[fertility$continent == 'Americas'] <- 'North America'
+
+fertility_mean_by_continent <- dplyr::group_by(fertility, continent) %>% 
+  dplyr::summarise(y2015 = mean(X2015, na.rm = TRUE), y2010 = mean(X2010, na.rm = TRUE),
+            y2005 = mean(X2005, na.rm = TRUE), y2000 = mean(X2000, na.rm = TRUE), 
+            y1995 = mean(X1995, na.rm = TRUE), y1990 = mean(X1990, na.rm = TRUE), 
+            y1985 = mean(X1985, na.rm = TRUE), y1980 = mean(X1980, na.rm = TRUE), 
+            y1975 = mean(X1975, na.rm = TRUE), y1970 = mean(X1970, na.rm = TRUE), 
+            y1965 = mean(X1965, na.rm = TRUE), y1960 = mean(X1960, na.rm = TRUE), 
+            y1955 = mean(X1955, na.rm = TRUE), y1950 = mean(X1950, na.rm = TRUE), 
+            y1945 = mean(X1945, na.rm = TRUE))
+
+#fertility_mean_by_continent <- fertility_mean_by_continent[,order(colnames(fertility_mean_by_continent))]
+library(reshape2)
+fertility_mean_by_continent <- melt(fertility_mean_by_continent, id.vars = 'continent',
+                                    variable.name = 'mean_year', value.name = 'mean_birth_rate')
+fertility_mean_by_continent$mean_year <- as.numeric(substr(fertility_mean_by_continent[,2],2,5))
+
+fertility_mean_by_continent
+
+ggplot(data = fertility_mean_by_continent, 
+       aes(x = mean_year, y = mean_birth_rate, color = continent)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks = seq(1945,2015,5))
+
+```
+
