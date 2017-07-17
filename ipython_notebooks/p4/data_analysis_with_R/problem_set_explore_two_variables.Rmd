@@ -133,9 +133,284 @@ count(diamonds$volume == 0)
 detach("package:plyr", unload = TRUE)
 ```
 
-*11. Quiz: *
+*11. Quiz: Correlations on subset*
+What's the correlation on volume? Exclude diamonds that have a volume of 0 or that are greater than or equal to 800.
+```{r}
+vol_diamonds <- subset(diamonds, volume > 0 & volume <= 800)
 
-*12. Quiz: *
-*13. Quiz: *
-*14. Quiz: *
-*15. Quiz: *
+cor.test(vol_diamonds$price, vol_diamonds$volume)
+```
+0.92
+
+*12. Quiz: Adjustments - price vs. volume*
+# Subset the data to exclude diamonds with a volume
+# greater than or equal to 800. Also, exclude diamonds
+# with a volume of 0. Adjust the transparency of the
+# points and add a linear model to the plot. (See the
+# Instructor Notes or look up the documentation of
+# geom_smooth() for more details about smoothers.)
+
+```{r}
+ggplot(data = vol_diamonds, aes(y = price, x = volume)) + 
+  geom_point(alpha = 1/20) + 
+  geom_smooth(method = 'lm') +
+  ggsave('pricevsvolume.png')
+```
+# Do you think this would be a useful model to estimate
+# the price of diamonds? Why or why not?
+Partially useful. There is definitely a strong correlation between volume and price of the diamonds, but other factors also have a large impact. For example, when we use color to visualize diamond cut, we see that a Fair cut diamond has to be about 25% larger than an Ideal cut diamond before it reaches the 10 000 price point.
+
+```{r}
+ggplot(data = vol_diamonds, aes(y = price, x = volume, color = cut)) + 
+  geom_point(alpha = 1/20) + 
+  geom_smooth(method = 'lm') +
+  ggsave('pricevsvolume2.png')
+```
+The relationship between price and volume does not appear to be strictly linear, and an exponential model might be a better fit.  
+```{r}
+
+ggplot(data = vol_diamonds, aes(y = price, x = volume, color = color)) + 
+  geom_point(alpha = 1/20) + 
+  geom_smooth(method = 'lm')
+```
+
+*13. Quiz: Mean price by clarity*
+# Use the function dplyr package
+# to create a new data frame containing
+# info on diamonds by clarity.
+
+# Name the data frame diamondsByClarity
+
+# The data frame should contain the following
+# variables in this order.
+
+#       (1) mean_price
+#       (2) median_price
+#       (3) min_price
+#       (4) max_price
+#       (5) n
+
+# where n is the number of diamonds in each
+# level of clarity.
+```{r}
+library(dplyr)
+
+diamondsByClarity <- group_by(diamonds,clarity) %>% 
+  summarise(mean_price = mean(price), median_price = median(price), 
+            min_price = min(price), max_price = max(price), n = n())
+
+diamondsByClarity  
+```
+
+*14. Quiz: Bar Charts of Mean Price*
+```{r}
+#Provided by quiz description
+diamonds_by_clarity <- group_by(diamonds, clarity)
+diamonds_mp_by_clarity <- summarise(diamonds_by_clarity, mean_price = mean(price))
+diamonds_by_color <- group_by(diamonds, color)
+diamonds_mp_by_color <- summarise(diamonds_by_color, mean_price = mean(price))
+```
+# Your task is to write additional code to create two bar plots
+# on one output image using the grid.arrange() function from the package
+# gridExtra.
+```{r}
+library(gridExtra)
+diamonds_mp_by_clarity
+diamonds_mp_by_color
+
+p1 <- ggplot(data = diamonds_mp_by_clarity,aes(x = clarity, y = mean_price)) +
+  geom_col()
+p2 <- ggplot(data = diamonds_mp_by_color,aes(x = color, y = mean_price)) +
+  geom_col()
+
+grid.arrange(p1, p2, ncol = 2)
+```
+
+*15. Quiz: Trends in Mean Price*
+What do you notice in each of the bar charts for mean price by clarity and mean price by color?
+For color, mean price goes up the poorer the color quality gets; the graph is right-skewed. For clarity, the mean price is fairly stable until clarity VVS2, except for SI2, which is more than 20% higher than I1, SI1, VS2 and VS1. 
+
+From solution:
+"We think something odd is going here. These trends seem to go against our intuition.
+Mean price tends to decrease as clarity improves. The same can be said for color.
+We encourage you to look into the mean price across cut."
+```{r}
+diamonds_mp_by_cut <- group_by(diamonds, cut) %>% 
+  summarise(mean_price = mean(price))
+
+p3 <- ggplot(data = diamonds_mp_by_cut,aes(x = cut, y = mean_price)) +
+  geom_col()
+
+grid.arrange(p1, p2, p3, nrow = 1)
+```
+
+*16. Quiz: Gapminder revisited*
+# The Gapminder website contains over 500 data sets with information about
+# the world's population. Your task is to continue the investigation you did at the
+# end of Problem Set 3 or you can start fresh and choose a different
+# data set from Gapminder.
+
+# If you’re feeling adventurous or want to try some data munging see if you can
+# find a data set or scrape one from the web.
+
+# In your investigation, examine pairs of variable and create 2-5 plots that make
+# use of the techniques from Lesson 4.
+
+# You can find a link to the Gapminder website in the Instructor Notes.
+
+# Once you've completed your investigation, create a post in the discussions that includes:
+#       1. the variable(s) you investigated, your observations, and any summary statistics
+#       2. snippets of code that created the plots
+#       3. links to the images of your plots
+```{r}
+#THIS CELL NEEDS CLEANUP (TBD)
+
+library(ggplot2)
+#Loading data
+fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1, check.names = F)
+fertility2 <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1)
+
+fertility2
+#install.packages('tibble')
+library(tibble)
+
+#Adding column for Country, for easier wrangling
+fertility <- rownames_to_column(fertility, var = "country")
+fertility2 <- rownames_to_column(fertility2, var = "country")
+
+#Getting initial overview of fertility rates per country in 2015
+ggplot(aes(x = country, y = fertility$'2015'), data = fertility) + 
+  geom_point()
+
+fertility$'2015'
+qplot(fertility$'2015', data = fertility)
+summary(fertility$'2015')
+
+View(fertility[-3])
+
+
+#Mean per year for all countries
+fertility_mean_by_year = data.frame(mean_birth_rate = colMeans(fertility[,-1], na.rm = T))
+
+
+#Looking for trends per year, sumarized mean for all countries using stack()
+ggplot(aes(x = ind, y = values), data = stack(fertility[,-1])) + 
+  geom_boxplot() + 
+  scale_y_continuous()
+
+library(tidyr)
+
+fertility_by_year <- gather(fertility, key = 'year', value = births, -country)
+
+fertility_mean_by_year <- group_by(fertility_by_year,year) %>% 
+  summarise(mean_birth_rate = max(births, na.rm = TRUE))
+
+summary(fertility$'2015')[5] - summary(fertility$'2015')[2]
+
+summary(fertility$'2015')[5,]
+summary(fertility$'2015')[2,]
+
+3.495-1.785
+
+ggplot(stack(fertility[200:215]), aes(x = ind, y = values)) + 
+  geom_boxplot()
+
+install.packages("countrycode")
+library(countrycode)
+
+countrycode(c('norway','usa'),'country.name','region')
+
+countrycode(row.names(fertility),'country.name','region')
+
+fertility$continent <- countrycode(fertility$country,'country.name','continent')
+fertility$region <- countrycode(fertility$country,'country.name','region')
+
+fertility[(length(fertility)-2):length(fertility)]
+
+View(tail(countrycode_data))
+
+
+distinct(countrycode_data,eurocontrol_pru)
+distinct(countrycode_data,region)
+distinct(countrycode_data,continent)
+
+ggplot(data = fertility, aes(x = region, y = fertility$'2015')) + 
+  geom_boxplot()
+
+ggplot(data = fertility, aes(x = continent, y = fertility$'2015')) + 
+  geom_boxplot()
+
+ggplot(data = fertility, aes(x = continent, y = fertility$'2015')) + 
+  geom_point()
+
+ggplot(data = fertility, aes(x = fertility$'2015')) + 
+  geom_histogram()
+
+subset(fertility, region == 'Central America')$country
+
+subset(fertility, country %in% c('Cuba', 'United States', 'Mexico'))$region
+
+unique(subset(fertility, continent == 'Americas')$region)
+
+#Dividing continent "Americas" into North and South
+fertility$continent[fertility$region == 'South America'] <- 'South America'
+fertility$continent[fertility$continent == 'Americas'] <- 'North America'
+
+#View(fertility[,c('country','continent','region','2015','2014','2010','2000')])
+
+#checking for same length
+nrow(fertility)
+nrow(fertility2)
+
+#spot checks
+fertility[42,1]
+fertility2[42,1]
+fertility[1,1]
+fertility2[1,1]
+tail(fertility[,1])
+tail(fertility2[,1])
+
+#Adding info about
+fertility2$continent <- fertility$continent
+fertility2$region <- fertility$region
+
+fertility_mean_by_continent <- group_by(fertility, continent) %>% 
+  summarise(mean_2015 = mean(fertility$'2015', na.rm = TRUE), mean_2010 = mean(fertility$'2010'),
+            mean_2005 = mean(fertility$'2005'), mean_2000 = mean(fertility$'2000'), 
+            mean_1995 = mean(fertility$'1995'), mean_1990 = mean(fertility$'1990'), 
+            mean_1985 = mean(fertility$'1985'), mean_1980 = mean(fertility$'1980'), 
+            mean_1975 = mean(fertility$'1975'), mean_1970 = mean(fertility$'1970'), 
+            mean_1965 = mean(fertility$'1965'), mean_1960 = mean(fertility$'1960'), 
+            mean_1955 = mean(fertility$'1955'), mean_1950 = mean(fertility$'1950'), 
+            mean_1945 = mean(fertility$'1945'))
+
+fertility_mean_by_continent <- dplyr::group_by(fertility2, continent) %>% 
+  dplyr::summarise(y2015 = mean(X2015, na.rm = TRUE), y2010 = mean(X2010, na.rm = TRUE),
+            y2005 = mean(X2005, na.rm = TRUE), y2000 = mean(X2000, na.rm = TRUE), 
+            y1995 = mean(X1995, na.rm = TRUE), y1990 = mean(X1990, na.rm = TRUE), 
+            y1985 = mean(X1985, na.rm = TRUE), y1980 = mean(X1980, na.rm = TRUE), 
+            y1975 = mean(X1975, na.rm = TRUE), y1970 = mean(X1970, na.rm = TRUE), 
+            y1965 = mean(X1965, na.rm = TRUE), y1960 = mean(X1960, na.rm = TRUE), 
+            y1955 = mean(X1955, na.rm = TRUE), y1950 = mean(X1950, na.rm = TRUE), 
+            y1945 = mean(X1945, na.rm = TRUE))
+
+#fertility_mean_by_continent <- fertility_mean_by_continent[,order(colnames(fertility_mean_by_continent))]
+library(reshape2)
+fertility_mean_by_continent <- melt(fertility_mean_by_continent, id.vars = 'continent',
+                                    variable.name = 'mean_year', value.name = 'mean_birth_rate')
+fertility_mean_by_continent$mean_year <- as.numeric(substr(fertility_mean_by_continent[,2],2,5))
+
+fertility_mean_by_continent
+
+ggplot(data = fertility_mean_by_continent, 
+       aes(x = mean_year, y = mean_birth_rate, color = continent)) +
+  geom_point() + 
+  geom_line() +
+  scale_x_continuous(breaks = seq(1945,2015,5))
+
+
+install.packages('wpp2015')
+library(wpp2015)
+
+```
+
