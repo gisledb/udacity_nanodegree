@@ -57,6 +57,18 @@ pf.fc_by_age_gender <- group_by(pf, age, gender) %>%
   summarise(mean_friend_count = mean(friend_count), 
             median_friend_count = median(friend_count),
             n = n())
+
+#This is mostly correct, but I forgot to remove null values.
+#Rhe solution from the video is like this:
+pf.fc_by_age_gender <- pf %>% 
+  filter(!is.na(gender)) %>% #to remove null values
+  group_by(age, gender) %>% 
+  summarise(mean_friend_count = mean(friend_count), 
+            median_friend_count = median(friend_count),
+            n = n()) %>% 
+  ungroup() %>% #ungrouping to use arrange
+  arrange(age)
+
 ```
 
 ***
@@ -65,19 +77,27 @@ pf.fc_by_age_gender <- group_by(pf, age, gender) %>%
 Notes:
 
 ```{r Plotting Conditional Summaries}
+ggplot(data = pf.fc_by_age_gender, 
+       aes(x = age, y = median_friend_count, color = gender)) +
+  geom_line()
 
+#From solution video, gives same result
+ggplot(data = pf.fc_by_age_gender, 
+       aes(x = age, y = median_friend_count)) +
+  geom_line(aes(color = gender))
 ```
 
 ***
 
 ### Thinking in Ratios
 Notes:
-
+How many times more friends do females have?
 ***
 
 ### Wide and Long Format
 Notes:
-
+"Many times when computing with and exploring data it is helpful to move back and forth between 
+these different arrangements". To carry this out in r, we can use the reshape2 package.
 ***
 
 ### Reshaping Data
@@ -86,6 +106,16 @@ Notes:
 ```{r}
 install.packages('reshape2')
 library(reshape2)
+
+#dcast() returns dataframe
+#To return array or matrix, use acast()
+
+pf.fc_by_age_gender.wide <- dcast(pf.fc_by_age_gender, 
+                                  age ~ gender, #left of ~ we keep, ~right what we change
+                                  value.var = 'median_friend_count') #column to take values from
+
+pf.fc_by_age_gender.wide
+pf.fc_by_age_gender
 ```
 
 
@@ -95,7 +125,34 @@ library(reshape2)
 Notes:
 
 ```{r Ratio Plot}
+# Plot the ratio of the female to male median
+# friend counts using the data frame
+# pf.fc_by_age_gender.wide.
 
+# Think about what geom you should use.
+# Add a horizontal line to the plot with
+# a y intercept of 1, which will be the
+# base line. Look up the documentation
+# for geom_hline to do that. Use the parameter
+# linetype in geom_hline to make the
+# line dashed.
+
+# The linetype parameter can take the values 0-6:
+# 0 = blank, 1 = solid, 2 = dashed
+# 3 = dotted, 4 = dotdash, 5 = longdash
+# 6 = twodash
+
+head(pf.fc_by_age_gender.wide)
+
+ggplot(data = pf.fc_by_age_gender.wide, aes(x = age, y = female/male)) + 
+  geom_point() +
+  geom_smooth() +
+  geom_hline(yintercept = 1, linetype = 2)
+
+#Solution from video
+ggplot(data = pf.fc_by_age_gender.wide, aes(x = age, y = female / male)) + 
+  geom_line() +
+  geom_hline(yintercept = 1, alpha = 0.3, linetype = 2) #alpha to make the line more transparent
 ```
 
 ***
@@ -104,7 +161,18 @@ Notes:
 Notes:
 
 ```{r Third Quantitative Variable}
+# Create a variable called year_joined
+# in the pf data frame using the variable
+# tenure and 2014 as the reference year.
 
+# The variable year joined should contain the year
+# that a user joined facebook.
+
+pf$year_joined <-  as.numeric(substring(2014 - (pf$tenure / 365),1,4))
+
+#Solution from video (better)
+pf$year_joined <-  floor(2014 - (pf$tenure / 365))
+#Opposite of floor(): ceiling()
 ```
 
 ***
@@ -113,7 +181,28 @@ Notes:
 Notes:
 
 ```{r Cut a Variable}
+summary(pf$year_joined)
 
+# Create a new variable in the data frame
+# called year_joined.bucket by using
+# the cut function on the variable year_joined.
+
+# You need to create the following buckets for the
+# new variable, year_joined.bucket
+
+#        (2004, 2009]
+#        (2009, 2011]
+#        (2011, 2012]
+#        (2012, 2014]
+
+# Note that a parenthesis means exclude the year and a
+# bracket means include the year.
+
+?cut
+
+pf$year_joined.bucket <- cut(pf$year_joined, 
+                             breaks = c(2004,2009,2011,2012,2014))
+#See https://chrisalbon.com/r-stats/cutting-up-data.html for simple tutorial on cut()
 ```
 
 ***
@@ -122,6 +211,26 @@ Notes:
 Notes:
 
 ```{r Plotting it All Together}
+#table() gives counts at each combination of factor levels
+table(pf$year_joined.bucket, useNA = 'ifany')
+
+# Create a line graph of friend_count vs. age
+# so that each year_joined.bucket is a line
+# tracking the median user friend_count across
+# age. This means you should have four different
+# lines on your plot.
+
+# You should subset the data to exclude the users
+# whose year_joined.bucket is NA.
+
+ggplot(data = subset(pf, !is.na(year_joined.bucket)), 
+       aes(x = age, y = friend_count, color = year_joined.bucket)) +
+  geom_line(stat = 'summary', fun.y = median)
+
+#Solution from video
+ggplot(data = subset(pf, !is.na(year_joined.bucket)), 
+       aes(x = age, y = friend_count, color = year_joined.bucket)) +
+  geom_line(aes(color = year_joined.bucket), stat = 'summary', fun.y = median)
 
 ```
 
@@ -131,6 +240,33 @@ Notes:
 Notes:
 
 ```{r Plot the Grand Mean}
+# Write code to do the following:
+
+# (1) Add another geom_line to code below
+# to plot the grand mean of the friend count vs age.
+
+# (2) Exclude any users whose year_joined.bucket is NA.
+
+# (3) Use a different line type for the grand mean.
+
+# As a reminder, the parameter linetype can take the values 0-6:
+
+# 0 = blank, 1 = solid, 2 = dashed
+# 3 = dotted, 4 = dotdash, 5 = longdash
+# 6 = twodash
+
+ggplot(data = subset(pf, !is.na(year_joined.bucket)), 
+       aes(x = age, y = friend_count, color = year_joined.bucket)) +
+  geom_line(aes(color = year_joined.bucket), stat = 'summary', fun.y = mean) +
+  geom_line(aes(x = age, y = friend_count), stat = 'summary', fun.y = mean,
+            linetype = 2, color = 'black')
+
+#Solution from video. I overcomplicated it above (same result though)
+ggplot(data = subset(pf, !is.na(year_joined.bucket)), 
+       aes(x = age, y = friend_count, color = year_joined.bucket)) +
+  geom_line(aes(color = year_joined.bucket), stat = 'summary', fun.y = mean) +
+  geom_line(stat = 'summary', fun.y = mean,
+            linetype = 2, color = 'black')
 
 ```
 
