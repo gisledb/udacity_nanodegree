@@ -269,15 +269,27 @@ ggplot(data = subset(pf, !is.na(year_joined.bucket)),
             linetype = 2, color = 'black')
 
 ```
-
+"Plotting the grand mean is a good reminder that much of the data in the sample is about members of the recent cohort. This is a high-level observation you want to make as you explore the data."
 ***
 
 ### Friending Rate
 Notes:
 
 ```{r Friending Rate}
+pf.tenure_above_zero = subset(pf, tenure > 0)
 
+pf.tenure_above_zero$tenure
+
+pf.tenure_above_zero$friends_per_day <- pf.tenure_above_zero$friend_count / pf.tenure_above_zero$tenure
+
+summary(pf.tenure_above_zero$friends_per_day)
+
+#Solution from video. More elegant, same answer.
+with(subset(pf, tenure >= 1), summary(friend_count / tenure))
 ```
+Median friend rate: 0.22
+Max friend rate: 417
+
 
 ***
 
@@ -285,10 +297,34 @@ Notes:
 Notes:
 
 What is the median friend rate?
-
+0.22
 What is the maximum friend rate?
-
+417
 ```{r Friendships Initiated}
+# Create a line graph of mean of friendships_initiated per day (of tenure)
+# vs. tenure colored by year_joined.bucket.
+
+# You need to make use of the variables tenure,
+# friendships_initiated, and year_joined.bucket.
+
+# You also need to subset the data to only consider user with at least
+# one day of tenure.
+
+ggplot(data = pf.tenure_above_zero, aes(x = tenure, y = friends_per_day,
+                                        color = year_joined.bucket)) +
+  geom_line(stat = 'summary', fun.y = mean)
+  
+ggplot(data = subset(pf.tenure_above_zero, tenure > 100),
+                     aes(x = tenure, y = friends_per_day,
+                                        color = year_joined.bucket)) +
+  geom_line(stat = 'summary', fun.y = mean)
+
+#Solution from video
+ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+       data = subset(pf, tenure >= 1)) +
+  geom_line(aes(color = year_joined.bucket),
+            stat = 'summary',
+            fun.y = mean)
 
 ```
 
@@ -299,41 +335,68 @@ Notes:
 
 ```{r Bias-Variance Tradeoff Revisited}
 
-ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+library(gridExtra)
+
+p1 <- ggplot(aes(x = tenure, y = friendships_initiated / tenure),
        data = subset(pf, tenure >= 1)) +
   geom_line(aes(color = year_joined.bucket),
             stat = 'summary',
             fun.y = mean)
 
-ggplot(aes(x = 7 * round(tenure / 7), y = friendships_initiated / tenure),
+p2 <- ggplot(aes(x = 7 * round(tenure / 7), y = friendships_initiated / tenure),
        data = subset(pf, tenure > 0)) +
   geom_line(aes(color = year_joined.bucket),
             stat = "summary",
             fun.y = mean)
 
-ggplot(aes(x = 30 * round(tenure / 30), y = friendships_initiated / tenure),
+p3 <- ggplot(aes(x = 30 * round(tenure / 30), y = friendships_initiated / tenure),
        data = subset(pf, tenure > 0)) +
   geom_line(aes(color = year_joined.bucket),
             stat = "summary",
             fun.y = mean)
 
-ggplot(aes(x = 90 * round(tenure / 90), y = friendships_initiated / tenure),
+p4 <- ggplot(aes(x = 90 * round(tenure / 90), y = friendships_initiated / tenure),
        data = subset(pf, tenure > 0)) +
   geom_line(aes(color = year_joined.bucket),
             stat = "summary",
             fun.y = mean)
+
+grid.arrange(p1,p2,p3,p4, ncol = 1)
+# Instead of geom_line(), use geom_smooth() to add a smoother to the plot.
+# You can use the defaults for geom_smooth() but do color the line
+# by year_joined.bucket
+
+ggplot(aes(x = tenure, y = friendships_initiated / tenure),
+       data = subset(pf, tenure >= 1)) +
+  geom_smooth(aes(color = year_joined.bucket))
 
 ```
-
+NOTE: The code changing the binning is substituting x = tenure in the plotting expressions with x = 7 * round(tenure / 7), etc., binning values by the denominator in the round function and then transforming back to the natural scale with the constant in front.
+For more, see http://scott.fortmann-roe.com/docs/BiasVariance.html
 ***
 
 ### Sean's NFL Fan Sentiment Study
 Notes:
-
+Expanding the time periods and adding spine(?) makes the data smoother/ trends clearer.
 ***
 
 ### Introducing the Yogurt Data Set
 Notes:
+Household purchases of 5 flavors of yougurt 8 oz size with price.
+
+Many rows per househould, one line per purchase.
+
+```{r}
+yo = read.csv('yogurt.csv')
+
+head(yo)
+str(yo)
+
+#Making id into categorical variable
+yo$id <- factor(yo$id)
+str(yo)
+
+```
 
 ***
 
@@ -341,8 +404,15 @@ Notes:
 Notes:
 
 ```{r Histograms Revisited}
+ggplot(data = yo, aes(x = price)) +
+  geom_histogram(binwidth = 5) + 
+  scale_x_continuous(breaks = seq(0,80,5))
 
+ggplot(data = yo, aes(x = price)) +
+  geom_histogram()
 ```
+Some price points are much more common than others.
+
 
 ***
 
@@ -351,6 +421,33 @@ Notes:
 
 ```{r Number of Purchases}
 
+
+summary(yo)
+
+#We see that there's only 20 unique price points
+length(unique(yo$price))
+
+# Create a new variable called all.purchases,
+# which gives the total counts of yogurt for
+# each observation or household.
+
+# One way to do this is using the transform
+# function. You can look up the function transform
+# and run the examples of code at the bottom of the
+# documentation to figure out what it does.
+
+# The transform function produces a data frame
+# so if you use it then save the result to 'yo'!
+
+yo$all.purchases
+
+?transform
+
+yo <- transform(yo, 
+          all.purchases = strawberry + blueberry + pina.colada +
+            plain + mixed.berry)
+
+head(yo)
 ```
 
 ***
@@ -359,21 +456,61 @@ Notes:
 Notes:
 
 ```{r Prices over Time}
+ggplot(data = yo, aes(x = all.purchases)) +
+  geom_histogram(fill = 'lightblue')
+```
+
+```{r Prices over Time}
+# Create a scatterplot of price vs time.
+
+# This will be an example of a time series plot.
+
+# Resolve overplotting issues by using
+# techniques you learned in Lesson 4.
+
+# What are some things that you notice?
+
+ggplot(data = yo, aes(y = price, x = time)) +
+  geom_point(alpha = 0.1) + 
+  geom_smooth()
+
+#Solution from video
+ggplot(aes(x  = time, y = price), data = yo) + 
+  geom_jitter(alpha = 1/4, shape = 21, fill = I('#F79420'))
 
 ```
+I notice that in general the prices tend to be fairly high with little variation from day to day. The modal price tend to go up over time.
 
 ***
 
 ### Sampling Observations
 Notes:
-
+When familiarizing yourself with a new dataset containing multiple observations of the same unit, it is often useful to work with a sample of those units, so that it is easy to display the raw data for that sample.
 ***
 
 ### Looking at Samples of Households
 
 ```{r Looking at Sample of Households}
+# Create a scatterplot of price vs time.
+
+# This will be an example of a time series plot.
+
+# Resolve overplotting issues by using
+# techniques you learned in Lesson 4.
+
+# What are some things that you notice?
+
+ggplot(data = yo, aes(y = price, x = time)) +
+  geom_point(alpha = 0.1) + 
+  geom_smooth()
+
+#Solution from video
+ggplot(aes(x  = time, y = price), data = yo) + 
+  geom_jitter(alpha = 1/4, shape = 21, fill = I('#F79420'))
 
 ```
+I notice that in general the prices tend to be fairly high with little variation from day to day. The modal price tend to go up over time.
+
 
 ***
 
