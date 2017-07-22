@@ -491,32 +491,28 @@ When familiarizing yourself with a new dataset containing multiple observations 
 ### Looking at Samples of Households
 
 ```{r Looking at Sample of Households}
-# Create a scatterplot of price vs time.
+#Random number generator
+set.seed(1009)
+sample.ids <- base::sample(levels(yo$id), 16)
 
-# This will be an example of a time series plot.
-
-# Resolve overplotting issues by using
-# techniques you learned in Lesson 4.
-
-# What are some things that you notice?
-
-ggplot(data = yo, aes(y = price, x = time)) +
-  geom_point(alpha = 0.1) + 
-  geom_smooth()
-
-#Solution from video
-ggplot(aes(x  = time, y = price), data = yo) + 
-  geom_jitter(alpha = 1/4, shape = 21, fill = I('#F79420'))
-
+ggplot(data = subset(yo, id %in% sample.ids), 
+       aes(x = time, y = price)) +
+  facet_wrap( ~ id) + #nice function, 1 plot per factor level
+  #Use the pch or shape parameter to specify the symbol when plotting points. 
+  geom_point(aes(size = all.purchases), pch = 1) +
+  geom_line() +
+  ggsave('yo_purchases_facet.png')
 ```
-I notice that in general the prices tend to be fairly high with little variation from day to day. The modal price tend to go up over time.
-
+I notice a lot of variation between the different households' yogurt buying patterns. Some households only make a few purchases (2-3), and these households tend to pay more per time than the households which make several purchases. Of the households with several more purchases, they tend to be fairly stable, with maybe one outlier purchase, with the exception of ID 2124545, which vary greatly in both price and number of purchases.
 
 ***
 
 ### The Limits of Cross Sectional Data
 Notes:
+"The general idea is that if we have observations over time, we can facet by the primary unit, case,
+or individual in the data set. For our yogurt data it was the households we were faceting over."
 
+Only possible to do when we have time series data, not possible with pseudo-Facebook dataset. Does not work with "snapshot based" datasets.
 ***
 
 ### Many Variables
