@@ -268,6 +268,17 @@ grid.arrange(p1, p2, p3, nrow = 1)
 library(ggplot2)
 #Loading data
 fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1, check.names = F)
+
+# fertility.long.samp <- melt(as.matrix(fertility[1:200,]))
+# fertility.long.samp
+# names(fertility.long.samp) <- c("country", "year", "value")
+# head(fertility.long.samp)
+# 
+# ggplot(aes(y = country, x = year, fill = value),
+#   data = fertility.long.samp) +
+#   geom_tile() +
+#   scale_fill_gradientn(colours = colorRampPalette(c("blue", "red"))(100))
+
 fertility2 <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1)
 
 fertility2
@@ -426,7 +437,7 @@ fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.na
 fertility <- rownames_to_column(fertility, var = "country")
 
 #Getting initial overview of fertility rates per country in 2015
-ggplot(aes(x = country, y = fertility$'2015'), data = fertility) + 
+ggplot(aes(x = country, y = 'X2015'), data = fertility) + 
   geom_point()
 
 #install.packages("countrycode")

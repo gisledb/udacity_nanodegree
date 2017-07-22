@@ -522,11 +522,49 @@ Notes:
 
 ### Scatterplot Matrix
 Notes:
+```{r}
+#install.packages('GGally')
+library(GGally)
+theme_set(theme_minimal(20))
 
+# set the seed for reproducable results
+set.seed(1836)
+
+pf_subset <- pf[, c(2:15)]
+nrow(pf_subset)
+names(pf_subset)
+ggpairs(pf_subset[sample.int(nrow(pf_subset), 1000), ])
+#?sample.int()
+
+
+```
+Quiz:
+1. Using the same sample of data, what's the correlation coefficient of 
+friendship initiated and friend count?
+0.77
+2. Using the same sample of data, what's the correlation coefficient of age and mobile likes? 
+-0.05
+3a. What type of plots are below the diagonal of the scatterplot matrix? 
+Scatter plots and bar charts.
+3b. What types of plots are created for the pairs of variables that include gender?
+Bar charts and box plots.
+
+"At the very least, scatterplot matrices can be a useful statting point for many analysises."
 ***
 
 ### Even More Variables
 Notes:
+Scatter matrices are even more useful when there are very many variables (e.g. genome research/genomic data, with 1000s of variables)
+```{r}
+#Dataset of gene expressions and tumors
+nci <- read.table('nci.tsv')
+
+nrow(nci)
+ncol(nci)
+names(nci)
+#changing the colnames to produce a nicer plot
+colnames(nci) <- c(1:64)
+```
 
 ***
 
@@ -539,6 +577,7 @@ colnames(nci) <- c(1:64)
 ```
 
 ```{r}
+library(reshape2)
 nci.long.samp <- melt(as.matrix(nci[1:200,]))
 names(nci.long.samp) <- c("gene", "case", "value")
 head(nci.long.samp)
@@ -548,13 +587,16 @@ ggplot(aes(y = gene, x = case, fill = value),
   geom_tile() +
   scale_fill_gradientn(colours = colorRampPalette(c("blue", "red"))(100))
 ```
-
+Even with such a dense display, we're not looking at all the data. We're only showing the first 200 genes of over 6000.
 
 ***
 
 ### Analyzing Three of More Variables
 Reflection:
+I've learned more about how to reshape data, and when and why to do so. I've learned a little bit about bias variance tradeoff. I also learned about faceting and scatterplot matrices.
 
+From video (Moira's thoughts):
+We extended techniques from earlier lessons and expanded them to look at patterns across many variables at once. 
 ***
 
 Click **KnitHTML** to see all of your hard work and to have an html
