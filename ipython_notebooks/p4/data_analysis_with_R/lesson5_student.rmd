@@ -500,8 +500,8 @@ ggplot(data = subset(yo, id %in% sample.ids),
   facet_wrap( ~ id) + #nice function, 1 plot per factor level
   #Use the pch or shape parameter to specify the symbol when plotting points. 
   geom_point(aes(size = all.purchases), pch = 1) +
-  geom_line() +
-  ggsave('yo_purchases_facet.png')
+  geom_line() #+
+#  ggsave('yo_purchases_facet.png')
 ```
 I notice a lot of variation between the different households' yogurt buying patterns. Some households only make a few purchases (2-3), and these households tend to pay more per time than the households which make several purchases. Of the households with several more purchases, they tend to be fairly stable, with maybe one outlier purchase, with the exception of ID 2124545, which vary greatly in both price and number of purchases.
 

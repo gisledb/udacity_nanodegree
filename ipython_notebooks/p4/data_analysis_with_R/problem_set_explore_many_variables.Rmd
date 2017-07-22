@@ -1,0 +1,38 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+*Quiz 1: Price Histograms with Facet and Color*
+```{r}
+# Create a histogram of diamond prices.
+# Facet the histogram by diamond color
+# and use cut to color the histogram bars.
+
+# The plot should look something like this.
+# http://i.imgur.com/b5xyrOu.jpg
+
+# Note: In the link, a color palette of type
+# 'qual' was used to color the histogram using
+# scale_fill_brewer(type = 'qual')
+
+# This assignment is not graded and
+# will be marked as correct when you submit.
+library(ggplot2)
+library(gridExtra)
+
+names(diamonds)
+
+ggplot(data = diamonds, aes(x = price, fill = cut)) + 
+  geom_histogram() + 
+  facet_wrap(~ color)
+
+#Adjusting for positive skew
+ggplot(data = diamonds, aes(x = price, fill = cut)) + 
+  geom_histogram() + 
+  facet_wrap(~ color) +
+  coord_trans(x = "log10") + 
+  xlim(100,20000)
+
+```
+
