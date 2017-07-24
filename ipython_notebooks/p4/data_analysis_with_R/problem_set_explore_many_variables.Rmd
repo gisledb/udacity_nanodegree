@@ -204,10 +204,10 @@ ggplot(data = diamonds, aes(x = cut, y = (price/carat), color = color)) +
   scale_color_brewer(type = 'div') +
   geom_jitter(width = 0.3, height = 0)
 
-#?geom_jitter()
+
 ```
 
-*Quiz 11: *
+*Quiz 11: Gapminder Multivariate Analysis*
 ```{r}
 # The Gapminder website contains over 500 data sets with information about
 # the world's population. Your task is to continue the investigation you did at the
@@ -227,5 +227,100 @@ ggplot(data = diamonds, aes(x = cut, y = (price/carat), color = color)) +
 #       2. snippets of code that created the plots
 #       3. links to the images of your plots
 
+library(ggplot2)
+#Loading data
+fertility <- read.csv('indicator undata total_fertility.csv', header = T, row.names = 1, check.names = F)
+
+
+head(fertility)
+
+library(reshape2)
+#?melt()
+fertility.long <- melt(as.matrix(fertility))
+names(fertility.long) <- c('country', 'year', 'value')
+
+#Creating heat map for birth rates, per country and year
+ggplot(data = fertility.long, aes(y = country, x = year, fill = value)) + 
+  geom_tile() + 
+  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
+```
+We see here that there are too many categorical variables for the heatmap to provide much useful information. To improve this I will try to divide the countries into regions instead, using the countrycode library.
+```{r}
+library(countrycode)
+library(dplyr)
+
+names(countrycode_data)
+
+?countrycode
+
+unique(countrycode_data$continent)
+unique(countrycode_data$region)
+
+countrycode('Norway', 'country.name', 'region')
+
+fertility$region <- countrycode(row.names(fertility), 'country.name','region')
+
+# # Commenting out some QA which was performed based on countrycode() warning messages
+# multimatch_countries = c('Eritrea and Ethiopia','Eastern Africa','Eastern Africa')
+# filter(fertility, row.names(fertility) %in% multimatch_countries)
+# subset(fertility, row.names(fertility) == 'Channel Islands')
+# tail(filter(fertility.long, grepl('ritrea and',country), !is.na(value) ),20)
+# filter(fertility, grepl('ritrea and',row.names(fertility)) )#, !is.na(value) )
+# filter(countrycode_data, grepl('ersey',country.name.en))
+fertility$continent <- countrycode(row.names(fertility), 'country.name','continent')
+
+#Adding region and continent to fertility.long
+library(tibble)
+fertility.long <- melt(rownames_to_column(fertility,'country'), 
+                       id = c('country','region','continent'))
+names(fertility.long)[4:5] <- c('year','birth_rate')
+
+ggplot(fertility.long, aes(x = region) )+ 
+  geom_histogram(stat = 'count')
+
+ggplot(fertility.long, aes(x = continent) )+ 
+  geom_histogram(stat = 'count')
+
+filter(fertility.long, region == 'Western Europe' & is.na(birth_rate))
+
+ggplot(data = subset(fertility.long, !is.na(region)), 
+       aes(x = year, y = region, fill = birth_rate)) + 
+  geom_tile() + 
+  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
+
+ggplot(data = fertility.long, 
+       aes(x = year, y = region, fill = birth_rate)) + 
+  geom_tile() + 
+  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
+
+
+by(fertility.long$birth_rate, fertility.long$region, summary)
+
+```
+
+```{r}
+library(countrycode)
+
+ggplot(data = diamonds, aes(x = cut, y = (price/carat)) ) +
+  # geom_point()
+  # geom_jitter()
+  # geom_count()
+  geom_bin2d()
+
+ggplot(data = fertility.long, aes(x = year, y = country, color = value)) +
+  # geom_point()
+  # geom_jitter()
+  # geom_count()
+  # geom_bin2d()
+
+
+```
+
+```{r}
+ggplot(data = fertility.long, 
+       aes(x = year, y = value)) + 
+  geom_point(alpha = 0.1, color = 'azure4') + 
+  geom_line(stat = 'summary', fun.y = median, color = 'blue') +
+  geom_line(stat = 'summary', fun.y = mean, color = 'red')
 ```
 
