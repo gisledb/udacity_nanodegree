@@ -299,6 +299,34 @@ by(fertility.long$birth_rate, fertility.long$region, summary)
 ```
 
 ```{r}
+#Adding bins for years
+
+subset(fertility.long,birth_rate == '2010')#%in% 
+                       as.factor(c('2000','2001','2010')))
+
+as.factor(c('2000','2001','2010'))
+
+#First plotting average per year to see if I can make some bins wider than others
+p1 <- ggplot(data = subset(fertility.long, !is.na(birth_rate) ),
+                     aes(y = birth_rate, x = year) ) +
+  geom_boxplot()
+
+p2 <- ggplot(data = subset(fertility.long, !is.na(birth_rate)),
+                     aes(y = birth_rate)) +
+  geom_line(aes(x = as.numeric(as.character(year)) ),
+             stat = 'summary', fun.y = mean, color = 'blue') +
+ geom_line(aes(x = as.numeric(as.character(year)) ),
+                stat = 'summary', fun.y = median, color = 'red')
+
+grid.arrange(p1,p2, ncol = 1)
+
+#Based on the above, I'll make the pre-1900 bins fairly wide
+# cut(as.numeric(as.character(fertility.long$year)), 
+#    breaks = c(1750,1800,1804,2010,2015))[1000]
+cut(as.numeric(as.character(fertility.long$year)), breaks = c(1750,1801,1804,1950,2000,2015))
+```
+
+```{r}
 library(countrycode)
 
 ggplot(data = diamonds, aes(x = cut, y = (price/carat)) ) +
@@ -318,7 +346,7 @@ ggplot(data = fertility.long, aes(x = year, y = country, color = value)) +
 
 ```{r}
 ggplot(data = fertility.long, 
-       aes(x = year, y = value)) + 
+       aes(x = year, y = birth_rate)) + 
   geom_point(alpha = 0.1, color = 'azure4') + 
   geom_line(stat = 'summary', fun.y = median, color = 'blue') +
   geom_line(stat = 'summary', fun.y = mean, color = 'red')
