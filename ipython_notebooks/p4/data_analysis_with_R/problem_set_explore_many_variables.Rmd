@@ -244,7 +244,7 @@ ggplot(data = fertility.long, aes(y = country, x = year, fill = value)) +
   geom_tile() + 
   scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
 ```
-We see here that there are too many categorical variables for the heatmap to provide much useful information. To improve this I will try to divide the countries into regions instead, using the countrycode library.
+We see here that there are too many categorical variables for the heatmap to provide much useful information. To improve this I will try to divide the countries into regions and continents instead, using the countrycode library.
 ```{r}
 library(countrycode)
 library(dplyr)
@@ -268,6 +268,15 @@ fertility$region <- countrycode(row.names(fertility), 'country.name','region')
 # filter(fertility, grepl('ritrea and',row.names(fertility)) )#, !is.na(value) )
 # filter(countrycode_data, grepl('ersey',country.name.en))
 fertility$continent <- countrycode(row.names(fertility), 'country.name','continent')
+
+#Splitting continent value 'Americas' into North and South
+fertility$continent[fertility$region == 'South America'] <- 'South America'
+fertility$continent[fertility$continent == 'Americas'] <- 'North America'
+
+count(fertility, continent)
+
+#row.names(subset(fertility, is.na(continent)))
+#row.names(subset(fertility, is.na(region)))
 
 #Adding region and continent to fertility.long
 library(tibble)
@@ -298,6 +307,7 @@ by(fertility.long$birth_rate, fertility.long$region, summary)
 
 ```
 
+Next I will look at how the mean birth rate for the different continents varied over time.
 ```{r}
 #Adding bins for years
 
@@ -320,29 +330,23 @@ p2 <- ggplot(data = subset(fertility.long, !is.na(birth_rate)),
 
 grid.arrange(p1,p2, ncol = 1)
 
-#Based on the above, I'll make the pre-1900 bins fairly wide
-# cut(as.numeric(as.character(fertility.long$year)), 
-#    breaks = c(1750,1800,1804,2010,2015))[1000]
-cut(as.numeric(as.character(fertility.long$year)), breaks = c(1750,1801,1804,1950,2000,2015))
+#Changing type of year for cutting purposes
+fertility.long$year <- as.numeric(as.character(fertility.long$year))
+
+#?cut()
+#Based on the above, I'll make the pre-1900 bins/buckets fairly wide
+fertility.long$year.bucket <- cut(fertility.long$year,breaks = c(
+  1800,1875,seq(1900,2020,10) ), dig.lab = 4, right = FALSE)
+
+
+ggplot(data = subset(fertility.long, !is.na(birth_rate) & !is.na(continent) ), 
+       aes(x = year.bucket, y = birth_rate)) + 
+  geom_bar(stat = 'summary', fun.y = mean) +
+  facet_wrap(~ continent) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 9)) +
+  scale_y_continuous(sec.axis = dup_axis())
 ```
-
-```{r}
-library(countrycode)
-
-ggplot(data = diamonds, aes(x = cut, y = (price/carat)) ) +
-  # geom_point()
-  # geom_jitter()
-  # geom_count()
-  geom_bin2d()
-
-ggplot(data = fertility.long, aes(x = year, y = country, color = value)) +
-  # geom_point()
-  # geom_jitter()
-  # geom_count()
-  # geom_bin2d()
-
-
-```
+With the exception of Europe, the mean birth rate for the different continents were fairly stable at around 6 until 1970.
 
 ```{r}
 ggplot(data = fertility.long, 
