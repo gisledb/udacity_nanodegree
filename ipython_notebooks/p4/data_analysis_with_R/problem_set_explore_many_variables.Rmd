@@ -237,12 +237,15 @@ head(fertility)
 library(reshape2)
 #?melt()
 fertility.long <- melt(as.matrix(fertility))
-names(fertility.long) <- c('country', 'year', 'value')
+names(fertility.long) <- c('country', 'year', 'birth_rate')
 
 #Creating heat map for birth rates, per country and year
-ggplot(data = fertility.long, aes(y = country, x = year, fill = value)) + 
+ggplot(data = fertility.long, aes(y = country, x = year, fill = birth_rate)) + 
   geom_tile() + 
-  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
+  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100)) +
+  theme(axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 8)) + 
+  ggsave('L8Q11heatmap.png')
 ```
 We see here that there are too many categorical variables for the heatmap to provide much useful information. To improve this I will try to divide the countries into regions and continents instead, using the countrycode library.
 ```{r}
@@ -295,30 +298,36 @@ filter(fertility.long, region == 'Western Europe' & is.na(birth_rate))
 ggplot(data = subset(fertility.long, !is.na(region)), 
        aes(x = year, y = region, fill = birth_rate)) + 
   geom_tile() + 
-  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
+  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100)) +
+      theme(axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10)) + 
+  ggsave('L8Q11heatmapregion.png')
 
-ggplot(data = fertility.long, 
-       aes(x = year, y = region, fill = birth_rate)) + 
-  geom_tile() + 
-  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100))
-
+ggplot(data = subset(fertility.long, !is.na(continent)), 
+       aes(x = year, y = continent, fill = birth_rate)) + 
+  geom_tile(na.rm = TRUE) + 
+  scale_fill_gradientn(colors = colorRampPalette(c("blue", "red"))(100)) +
+      theme(axis.text.x = element_text(size = 10),
+          axis.text.y = element_text(size = 10)) + 
+  ggsave('L8Q11heatmapcontinent.png')
 
 by(fertility.long$birth_rate, fertility.long$region, summary)
 
+?geom_tile()
+
+subset(fertility.long, region == 'Southern Europe')
+
 ```
 
-Next I will look at how the mean birth rate for the different continents varied over time.
+This also does not tell us much, and I suspect the tile plot is not very good to use for this dataset. Next I will do some wrangling to get a better look at how the mean birth rate for the different continents varied over time.
 ```{r}
 #Adding bins for years
 
-subset(fertility.long,birth_rate == '2010')#%in% 
-                       as.factor(c('2000','2001','2010')))
-
-as.factor(c('2000','2001','2010'))
+head(fertility.long2)
 
 #First plotting average per year to see if I can make some bins wider than others
 p1 <- ggplot(data = subset(fertility.long, !is.na(birth_rate) ),
-                     aes(y = birth_rate, x = year) ) +
+                     aes(y = birth_rate, x = as.factor(year) ) ) +
   geom_boxplot()
 
 p2 <- ggplot(data = subset(fertility.long, !is.na(birth_rate)),
@@ -329,6 +338,7 @@ p2 <- ggplot(data = subset(fertility.long, !is.na(birth_rate)),
                 stat = 'summary', fun.y = median, color = 'red')
 
 grid.arrange(p1,p2, ncol = 1)
+# ggsave('L8Q11grid.png', arrangeGrob(p1,p2, ncol = 1)) #to save grid plot
 
 #Changing type of year for cutting purposes
 fertility.long$year <- as.numeric(as.character(fertility.long$year))
@@ -338,21 +348,31 @@ fertility.long$year <- as.numeric(as.character(fertility.long$year))
 fertility.long$year.bucket <- cut(fertility.long$year,breaks = c(
   1800,1875,seq(1900,2020,10) ), dig.lab = 4, right = FALSE)
 
-
 ggplot(data = subset(fertility.long, !is.na(birth_rate) & !is.na(continent) ), 
        aes(x = year.bucket, y = birth_rate)) + 
   geom_bar(stat = 'summary', fun.y = mean) +
   facet_wrap(~ continent) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 9)) +
-  scale_y_continuous(sec.axis = dup_axis())
+  scale_y_continuous(sec.axis = dup_axis()) + 
+  ggsave('L8Q11facet.png')
 ```
-With the exception of Europe, the mean birth rate for the different continents were fairly stable at around 6 until 1970.
+With the exception of Europe, the mean birth rates for the different continents were fairly stable at around 6 until 1970. Europe's mean birth rate was already as low as 5 by the end of the 1800s, and steadily declined to a below 3 by the 1970s.The decline slowed down a bit after that, to a low point of around 1.75 in the first decade of the 2000s, and actually went up a little bit in the first half of the 2010s. For Asia, Oceania, North American and South America, a rapid decline in mean birth rate started in the 1970s, and continued into the first halft of the 2010s, when it was between 2 and 2.6 for the four continents. Africa has also had a a decline in mean birth rate, but it did not really start until the 1990s, and by the first half of the 2010s the mean birth rate for African countries was still above 4. 
+
+A flaw in the plots above and the following analysis is that it is not weighted for country population, leading to a tiny country having the same impact as the most populous countries. I started trying to match population data from the wpp2015 package (see below) to the country names from the fertility data set, and ran into a severe matching issue. 85 of the 258 country names in the fertility dataset did not have a match on name in the wpp2015 dataset. Sometime this was due to the countries being very small (e.g. Andorra), but often this was due to different naming conventions in the different datasets (e.g. Russia and Russian Federation). In the end I decided this to be outside the scope of this exercise, and decided to stop at this point.
 
 ```{r}
-ggplot(data = fertility.long, 
-       aes(x = year, y = birth_rate)) + 
-  geom_point(alpha = 0.1, color = 'azure4') + 
-  geom_line(stat = 'summary', fun.y = median, color = 'blue') +
-  geom_line(stat = 'summary', fun.y = mean, color = 'red')
-```
+#install.packages('wpp2015')
+library(wpp2015)
 
+data(pop)
+head(pop)
+
+unique(anti_join(fertility.long, pop, by = c('country' = 'name'))$country)
+length(unique(anti_join(fertility.long, pop, by = c('country' = 'name'))$country))
+unique(anti_join(pop, fertility.long, by = c('name' = 'country'))$name)
+length(unique(fertility.long$country))
+
+subset(pop, name %in% 'Russian Federation')
+subset(pop, name == 'Andorra')
+arrange(pop,name)$name
+```
