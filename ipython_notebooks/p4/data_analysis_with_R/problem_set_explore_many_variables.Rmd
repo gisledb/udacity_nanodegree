@@ -353,8 +353,8 @@ ggplot(data = subset(fertility.long, !is.na(birth_rate) & !is.na(continent) ),
   geom_bar(stat = 'summary', fun.y = mean) +
   facet_wrap(~ continent) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 9)) +
-  scale_y_continuous(sec.axis = dup_axis()) + 
-  ggsave('L8Q11facet.png')
+  scale_y_continuous(sec.axis = dup_axis()) #+ 
+#  ggsave('L8Q11facet.png')
 ```
 With the exception of Europe, the mean birth rates for the different continents were fairly stable at around 6 until 1970. Europe's mean birth rate was already as low as 5 by the end of the 1800s, and steadily declined to a below 3 by the 1970s.The decline slowed down a bit after that, to a low point of around 1.75 in the first decade of the 2000s, and actually went up a little bit in the first half of the 2010s. For Asia, Oceania, North American and South America, a rapid decline in mean birth rate started in the 1970s, and continued into the first halft of the 2010s, when it was between 2 and 2.6 for the four continents. Africa has also had a a decline in mean birth rate, but it did not really start until the 1990s, and by the first half of the 2010s the mean birth rate for African countries was still above 4. 
 
