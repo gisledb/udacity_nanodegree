@@ -24,12 +24,13 @@ a margin line to help you keep track of this guideline!
 # want it to. This will clean up the flow of your report.
 
 library(ggplot2)
+library(dplyr)
+library(tidyr)
 ```
 
 ```{r echo=FALSE, Load_the_Data}
 # Load the Data
-library(dplyr)
-library(tidyr)
+
 setwd('/Users/ggaasemyr/Documents/udacity/ipython_notebooks/p4/')
 
 characters <- read.csv('data/character_list5.csv')
@@ -38,6 +39,29 @@ str(characters)
 movies <- read.csv('data/meta_data7.csv')
 head(movies)
 str(movies)
+```
+
+> **Tip**: Before you create any plots, it is a good idea to provide a short
+introduction into the dataset that you are planning to explore. Replace this
+quoted text with that general information!
+
+I want to take a look at how lines in movie scripts affect chances of winning 
+academy awards (AKA Oscar) and also how lines affect IMDB scores. Ideally I 
+would like to evaluate the vocabulary in scripts for oscar winning movies, 
+compared to non-winning movies. Obtaining such has however turned out to be 
+very difficult, so I have instead decided to use datasets containing 
+word and character counts.
+
+# Univariate Plots Section
+
+> **Tip**: In this section, you should perform some preliminary exploration of
+your dataset. Run some summaries of the data and create univariate plots to
+understand the structure of the individual variables in your dataset. Don't
+forget to add a comment after each plot or closely-related group of plots!
+There should be multiple code chunks and text sections; the first one below is
+just to help you get started.
+
+```{r echo=FALSE, Univariate_Plots}
 #ensuring all movies have a match
 anti_join(characters, movies, by='script_id')
 
@@ -58,24 +82,37 @@ ggplot(data = script_summary, aes(x = characters, y = total_words)) +
   geom_point() + 
   geom_smooth() + 
   geom_line(stat = 'summary', fun.y = mean, color = 'red')
+
+subset(script_summary, title == 'Cast Away')
+subset(characters, title == 'Cast Away')
+
+?cor()
+
+cor(script_summary$total_words, script_summary$characters, method = 'pearson')
 ```
 
-> **Tip**: Before you create any plots, it is a good idea to provide a short
-introduction into the dataset that you are planning to explore. Replace this
-quoted text with that general information!
+```{r}
+academy.nominated <- read.csv('data/database.csv')
+academy.winners <- subset(academy.nominated, Winner == 1)
 
-# Univariate Plots Section
 
-> **Tip**: In this section, you should perform some preliminary exploration of
-your dataset. Run some summaries of the data and create univariate plots to
-understand the structure of the individual variables in your dataset. Don't
-forget to add a comment after each plot or closely-related group of plots!
-There should be multiple code chunks and text sections; the first one below is
-just to help you get started.
+head(semi_join(by = c('title' = 'Film') | c('title' = 'Name'),
+                      script_summary,academy.winners))
 
-```{r echo=FALSE, Univariate_Plots}
+#checking for strange misses
+View(anti_join(academy.winners, script_summary, by = c('Film' = 'title') ) %>% 
+  arrange(desc(Year)))
+
+ifelse()
+
+View(tail(academy.winners,20))
+
+head(academy.nominated[,1:5])
+head(academy.nominated[,c(1:4,6)])
+
 
 ```
+
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
 each code block and the end / start of your Markdown text so that it is
