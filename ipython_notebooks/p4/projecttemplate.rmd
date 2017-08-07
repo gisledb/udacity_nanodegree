@@ -33,7 +33,10 @@ library(tidyr)
 
 setwd('/Users/ggaasemyr/Documents/udacity/ipython_notebooks/p4/')
 
-characters <- read.csv('data/character_list5.csv')
+characters <- read.csv('data/character_list5.csv', strip.white = TRUE)
+
+?read.csv
+
 head(characters)
 str(characters)
 movies <- read.csv('data/meta_data7.csv')
@@ -92,12 +95,39 @@ cor(script_summary$total_words, script_summary$characters, method = 'pearson')
 ```
 
 ```{r}
-academy.nominated <- read.csv('data/database.csv')
+academy.nominated <- read.csv('data/database.csv', strip.white = TRUE)
 academy.winners <- subset(academy.nominated, Winner == 1)
 
 
-head(semi_join(by = c('title' = 'Film') | c('title' = 'Name'),
+head(semi_join(by = c('title' = 'Film'), #| c('title' = 'Name'),
                       script_summary,academy.winners))
+
+tail(inner_join(by = c('title' = 'Film'), #| c('title' = 'Name'), 
+           script_summary,academy.nominated)  %>% 
+  inner_join(by = c('title' = 'Name'), academy.nominated), 20)
+
+filter(academy.nominated, Film == 'Tootsie')
+
+inner_join(by = c('title' = 'Film'), #| c('title' = 'Name'), 
+           script_summary,academy.nominated) %>% 
+  inner_join(by = c('title' = 'Name'), academy.nominated) %>% 
+  group_by(title) %>% 
+  summarise(year = first(Year), nominations = n(), oscars = n_distinct(Winner)) %>% 
+  arrange(desc(year)) %>% 
+  head(20)
+
+academy.nominated %>% 
+  group_by(Film)
+
+
+academy.nominated %>% 
+  group_by(Film) %>% 
+  summarise(nominations = n() )#, wins = n_distinct(Winner)) %>% 
+  arrange(desc(wins))
+
+filter(academy.nominated, Name == 'Titanic' | Film == 'Titanic')
+
+# filter(academy.nominated, grepl('Titanic ',Name))
 
 #checking for strange misses
 View(anti_join(academy.winners, script_summary, by = c('Film' = 'title') ) %>% 
@@ -110,7 +140,27 @@ View(tail(academy.winners,20))
 head(academy.nominated[,1:5])
 head(academy.nominated[,c(1:4,6)])
 
+?union(academy.nominated[,1:5], academy.nominated[,c(1:4,6)])
 
+str(academy.nominated$Award)
+df %>%
+  group_by(name) %>%
+  filter(n() < 4)
+
+group
+group_by(academy.nominated, Award) %>% 
+  filter(n() < 10) %>% 
+  group_by(Year) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n))
+
+ggplot(group_by(academy.nominated, Award) %>% filter(n() < 10),
+       aes(x = Award) ) +
+  geom_bar(stat = 'count') +
+  geom_text(stat='count',aes(label=..count..),vjust=-1) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9))
+
+?geom_text
 ```
 
 
