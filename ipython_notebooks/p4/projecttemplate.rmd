@@ -22,7 +22,7 @@ a margin line to help you keep track of this guideline!
 # The other parameters for "message" and "warning" should also be set to FALSE
 # for other code chunks once you have verified that each plot comes out as you
 # want it to. This will clean up the flow of your report.
-
+#install.packages('ggplot2')
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -42,6 +42,22 @@ str(characters)
 movies <- read.csv('data/meta_data7.csv')
 head(movies)
 str(movies)
+```
+
+```{r}
+View(characters)
+
+percentile <- ecdf(as.numeric(script_summary$total_words))
+
+percentile(filter(script_summary, title == 'Before Sunset')$total_words)
+
+nrow(movies)
+
+  
+arrange(characters, desc(words))
+
+filter(master.list, grepl('inklater', master.list$director)) %>% 
+  inner_join(script_summary, by = 'title')
 ```
 
 ### Dataset Limitations
@@ -104,7 +120,8 @@ cor(script_summary$total_words, script_summary$characters, method = 'pearson')
 [MOVIES BY YEAR PLOT]
 ```{r}
 ggplot(movies, aes(x = year)) + 
-  geom_histogram(bins = length(seq(min(movies$year), max(movies$year), 1)), 
+  geom_histogram(bins = length(seq(min(movies$year), 
+                                   max(movies$year), 1)), 
                  color = 'red', alpha = .2) +
   scale_x_continuous(breaks = seq(1920, 2015, 5))
 
@@ -227,8 +244,18 @@ nrow(filter(oscar_matches, Year > 1994))
 
 nrow(missing.oscar.scripts.after.1994)
 
-install.packages('agrep')
-library(agr)
+#install.packages('fuzzyjoin')
+library(fuzzyjoin)
+
+library(dplyr)
+
+head(movies)
+
+stringdist_inner_join(missing.oscar.scripts.after.1994, movies,
+                      by = c(Film = 'title'))#, max_dist = 4)
+
+inner_join(missing.oscar.scripts.after.1994, movies, 
+           by = c(a))
 ```
 
 ```{r}
@@ -266,7 +293,9 @@ master.matches <- inner_join(script_summary, master.list, by = 'title')
 
 nrow(master.matches)
 
-tmp_imdb_matches <- inner_join(master.matches, movies, by = 'imdb_id')
+tmp_imdb_matches <- inner_join(master.matches, movies, by = 'imdb_id' )
+
+nrow(tmp_imdb_matches)
 
 View(anti_join(master.matches, tmp_imdb_matches, 
           by = c('title' = 'title.x') ))
@@ -283,9 +312,27 @@ head(tmp_imdb_matches)
 View(inner_join(master.matches, movies, by = 'title') %>% 
   anti_join(master.matches, by = 'title'))
 
+View(anti_join(master.list, movies, by = 'imdb_id') %>% 
+       arrange(rank_ss_2012))#desc(as.numeric(imdb_votes))))
+
+filter(master.matches$, title)
+
+View(head(master.list))
+
 anti_join(inner_join(master.matches, movies, by = 'title'), master.matches, by = 'title')
 
-filter(master.list, grepl('inklater', master.list$director))
+ggplot(master.list, aes(x = year, alpha = .2)) + 
+  geom_histogram(bins = length(seq(min(master.list$year), 
+                                   max(master.list$year),1))) +
+  geom_histogram(data = master.matches, aes(fill = 'green', color = NULL), 
+                 bins = length(seq(min(master.list$year), 
+                                   max(master.list$year),1))) + scale_x_continuous(breaks = seq(1920, 2015, 5))
+                 
+ggplot(master.list, aes(x = as.numeric('year'))) +
+  geom_histogram(st)
+
+filter(master.list, grepl('inklater', master.list$director)) %>% 
+  inner_join(script_summary, by = 'title')
 
 master.matches[78,]
 
