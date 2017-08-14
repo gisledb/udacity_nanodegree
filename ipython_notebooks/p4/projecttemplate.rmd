@@ -53,11 +53,16 @@ percentile(filter(script_summary, title == 'Before Sunset')$total_words)
 
 nrow(movies)
 
-  
 arrange(characters, desc(words))
 
 filter(master.list, grepl('inklater', master.list$director)) %>% 
   inner_join(script_summary, by = 'title')
+
+#Checking for alternative title matches
+View(inner_join(filter(master.list, as.character(title) != 
+         as.character(alternate_title)), movies, 
+                by = c('alternate_title' = 'title')) )
+
 ```
 
 ### Dataset Limitations
@@ -75,6 +80,35 @@ would like to evaluate the vocabulary in scripts for oscar winning movies,
 compared to non-winning movies. Obtaining such has however turned out to be 
 very difficult, so I have instead decided to use datasets containing 
 word and character counts.
+
+```{r}
+View(academy.winners %>%  
+  group_by(Award) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n)))
+
+str(academy.winners)
+
+View(filter(academy.winners, Year == 2014))
+
+tail(academy.winners)
+
+
+nrow(filter(inner_join(script_summary, movies, by = 'script_id',
+           suffix = c('','.y'), 'name' == 'name.y')))
+
+inner_join(script_summary, movies, by = 'script_id',
+           suffix = c('','.y'))[c('script_id','imdb_id','title')]
+
+combined.1995.to.2015 <- 
+  filter(academy.winners, as.numeric(Year) >= 1995, 
+         as.numeric(Year) <= 2015) %>% 
+  inner_join(filter(script_summary, 
+                                year >= 1995, year <=2015), 
+             by = c('Film' = 'name'))
+
+```
+
 
 # Univariate Plots Section
 
