@@ -97,18 +97,52 @@ tail(academy.winners)
 nrow(filter(inner_join(script_summary, movies, by = 'script_id',
            suffix = c('','.y'), 'name' == 'name.y')))
 
-inner_join(script_summary, movies, by = 'script_id',
-           suffix = c('','.y'))[c('script_id','imdb_id','title')]
+script_summary <- inner_join(script_summary, movies, by = 'script_id',
+           suffix = c('','.y'))[c('script_id','imdb_id','title', 'total_words',
+                                  'characters','year')]
+
+str(movies)
+
+head(filter(academy.winners, Year_numeric >= 1995, 
+         Year_numeric <= 2015))
+
+head(academy.winners)
+
+filter(script_summary, 
+                                year >= 1995, year <=2015)
 
 combined.1995.to.2015 <- 
-  filter(academy.winners, as.numeric(Year) >= 1995, 
-         as.numeric(Year) <= 2015) %>% 
+  filter(academy.winners, Year_numeric >= 1995, 
+         Year_numeric <= 2015) %>% 
   inner_join(filter(script_summary, 
                                 year >= 1995, year <=2015), 
-             by = c('Film' = 'name'))
+             by = c('Name' = 'title'))
 
+head(combined.1995.to.2015)
+nrow(combined.1995.to.2015)
+head(academy.winners)
+head(script_summary)
 ```
 
+```{r}
+#Joining all categories
+join_years = seq(1996,2015,1)
+
+common.categories = list(as.character(unique(filter(
+  academy.winners, Year_numeric == 1995)$Award)))
+dropped.categories = list()
+
+common.categories
+list(as.character(unique(filter(academy.winners, Year_numeric == 1999)$Award)))
+
+setdiff(as.character(list(
+  unique(filter(academy.winners, Year_numeric == 1999)$Award))),
+   common.categories)
+
+for (year in join_years) {
+  
+}
+```
 
 # Univariate Plots Section
 
@@ -164,6 +198,8 @@ ggplot(movies, aes(x = year)) +
 
 ```{r}
 academy.nominated <- read.csv('data/database.csv', strip.white = TRUE)
+str(academy.nominated)
+academy.nominated$Year_numeric <- as.numeric(as.character(academy.nominated$Year))
 academy.winners <- subset(academy.nominated, Winner == 1)
 
 
