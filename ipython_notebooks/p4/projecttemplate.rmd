@@ -106,42 +106,47 @@ str(movies)
 head(filter(academy.winners, Year_numeric >= 1995, 
          Year_numeric <= 2015))
 
-head(academy.winners)
-
-filter(script_summary, 
-                                year >= 1995, year <=2015)
+academy.winners.1995.to.2015 <- 
+  filter(academy.winners, Year_numeric >= 1995, 
+         Year_numeric <= 2015)
 
 combined.1995.to.2015 <- 
-  filter(academy.winners, Year_numeric >= 1995, 
-         Year_numeric <= 2015) %>% 
+  academy.winners.1995.to.2015 %>% 
   inner_join(filter(script_summary, 
                                 year >= 1995, year <=2015), 
              by = c('Name' = 'title'))
 
-head(combined.1995.to.2015)
-nrow(combined.1995.to.2015)
-head(academy.winners)
-head(script_summary)
 ```
 
 ```{r}
 #Joining all categories
-join_years = seq(1996,2015,1)
 
-common.categories = list(as.character(unique(filter(
-  academy.winners, Year_numeric == 1995)$Award)))
-dropped.categories = list()
+awards.2015 <- (filter(academy.winners, Year == '2015')$Award)
 
-common.categories
-list(as.character(unique(filter(academy.winners, Year_numeric == 1999)$Award)))
+awards.count <- 
+  academy.winners.1995.to.2015 %>% 
+  group_by(Award) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
 
-setdiff(as.character(list(
-  unique(filter(academy.winners, Year_numeric == 1999)$Award))),
-   common.categories)
+awards.count$in_2015 <- awards.count$Award %in% awards.2015
+View(awards.count)
+View(filter(awards.count, in_2015 == TRUE))
 
-for (year in join_years) {
-  
-}
+```
+Looking at the aggregated awards, it becomes clear that some have 
+changed names in recent years, and are for all purposes the same. 
+Therefore I will rename some of the older award names in the combined.1995.to.2015 dataframe to the new 
+award names, in the following way:
+- 'Writing (Screenplay Based on Material Previously Produced or Published)' will be replaced by 'Writing (Adapted Screenplay)'
+- 'Writing (Screenplay Written Directly for the Screen)' will
+be replaced by 'Writing (Original Screenplay)'
+-'Music (Original Dramatic Score)' and 'Music (Original Musical or Comedy Score)' will be replaced by 'Music (Original Score)'
+-'Sound' will be replaced by 'Sound Mixing'
+-'Makeup' will be replaced by 'Makeup and Hair Styling'
+```{r}
+View(filter(academy.winners, Ceremony == 88))#Winner == 'The Revenant')
+
 ```
 
 # Univariate Plots Section
