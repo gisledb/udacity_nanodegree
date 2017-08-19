@@ -145,6 +145,35 @@ be replaced by 'Writing (Original Screenplay)'
 -'Sound' will be replaced by 'Sound Mixing'
 -'Makeup' will be replaced by 'Makeup and Hair Styling'
 ```{r}
+
+award_replacements <- c(
+  'Writing (Screenplay Based on Material Previously Produced or Published)'='Writing (Adapted Screenplay)',
+  'Writing (Screenplay Written Directly for the Screen)'=
+    'Writing (Original Screenplay)',
+ 'Music (Original Dramatic Score)'='Music (Original Score)',
+ 'Music (Original Musical or Comedy Score)'='Music (Original Score)',
+ 'Sound'='Sound Mixing',
+ 'Makeup'='Makeup and Hair Styling')
+
+award_replacements
+
+award_replacements[Sound]
+
+count = 0
+
+tmp_l <- for (name in names(award_replacements)) {
+  count = count + 1
+  `if`(combined.1995.to.2015$Award == name,
+         award_replacements[count],
+         ,combined.1995.to.2015$Award)
+}
+
+tmp_l
+
+`if`(combined.1995.to.2015$Award == 'Writing (Screenplay Based on Material Previously Produced or Published)', 'Writing (Adapted Screenplay)', combined.1995.to.2015$Award)
+```
+
+```{r}
 View(filter(academy.winners, Ceremony == 88))#Winner == 'The Revenant')
 
 ```
