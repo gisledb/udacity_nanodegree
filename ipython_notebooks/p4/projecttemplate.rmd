@@ -110,18 +110,14 @@ academy.winners.1995.to.2015 <-
   filter(academy.winners, Year_numeric >= 1995, 
          Year_numeric <= 2015)
 
-combined.1995.to.2015 <- 
-  academy.winners.1995.to.2015 %>% 
-  inner_join(filter(script_summary, 
-                                year >= 1995, year <=2015), 
-             by = c('Name' = 'title'))
-
 ```
 
 ```{r}
 #Joining all categories
 
 awards.2015 <- (filter(academy.winners, Year == '2015')$Award)
+
+View(academy.winners.1995.to.2015)
 
 awards.count <- 
   academy.winners.1995.to.2015 %>% 
@@ -133,19 +129,24 @@ awards.count$in_2015 <- awards.count$Award %in% awards.2015
 View(awards.count)
 View(filter(awards.count, in_2015 == TRUE))
 
+View(awards)
+
 ```
 Looking at the aggregated awards, it becomes clear that some have 
 changed names in recent years, and are for all purposes the same. 
-Therefore I will rename some of the older award names in the combined.1995.to.2015 dataframe to the new 
-award names, in the following way:
-- 'Writing (Screenplay Based on Material Previously Produced or Published)' will be replaced by 'Writing (Adapted Screenplay)'
+Therefore I will rename some of the older award names in the 
+academy.winners.1995.to.2015 dataframe to the new award names, 
+in the following way:
+- 'Writing (Screenplay Based on Material Previously Produced or Published)' 
+will be replaced by 'Writing (Adapted Screenplay)'
 - 'Writing (Screenplay Written Directly for the Screen)' will
 be replaced by 'Writing (Original Screenplay)'
--'Music (Original Dramatic Score)' and 'Music (Original Musical or Comedy Score)' will be replaced by 'Music (Original Score)'
+-'Music (Original Dramatic Score)' and 'Music (Original Musical 
+or Comedy Score)' will be replaced by 'Music (Original Score)'
 -'Sound' will be replaced by 'Sound Mixing'
 -'Makeup' will be replaced by 'Makeup and Hair Styling'
 ```{r}
-
+#Creating dictionary for award name replacements
 award_replacements <- c(
   'Writing (Screenplay Based on Material Previously Produced or Published)'='Writing (Adapted Screenplay)',
   'Writing (Screenplay Written Directly for the Screen)'=
@@ -153,25 +154,108 @@ award_replacements <- c(
  'Music (Original Dramatic Score)'='Music (Original Score)',
  'Music (Original Musical or Comedy Score)'='Music (Original Score)',
  'Sound'='Sound Mixing',
- 'Makeup'='Makeup and Hair Styling')
-
-award_replacements
-
-award_replacements[Sound]
+ 'Makeup'='Makeup and Hairstyling')
 
 count = 0
-
-tmp_l <- for (name in names(award_replacements)) {
+for (name in names(award_replacements)) {
   count = count + 1
-  `if`(combined.1995.to.2015$Award == name,
-         award_replacements[count],
-         ,combined.1995.to.2015$Award)
+
+  #Test
+  print(name)
+  print(nrow(academy.winners.1995.to.2015[
+    (academy.winners.1995.to.2015$Award == name),]))
+
+  #Changing name to 2015 names
+  academy.winners.1995.to.2015[(academy.winners.1995.to.2015$Award == 
+                                  name),]$Award <- award_replacements[count]
 }
 
-tmp_l
-
-`if`(combined.1995.to.2015$Award == 'Writing (Screenplay Based on Material Previously Produced or Published)', 'Writing (Adapted Screenplay)', combined.1995.to.2015$Award)
 ```
+Now that the Award names are updated in the award winner 1995-2015 dataframe, 
+I will create updated summary tables as well.
+```{r}
+awards.edited.count <- 
+  academy.winners.1995.to.2015 %>% 
+  group_by(Award) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+awards.edited.count$in_2015 <- awards.edited.count$Award %in% awards.2015
+View(awards.edited.count)
+View(filter(awards.edited.count, in_2015 == TRUE))
+
+nrow(filter(awards.edited.count, count > 20))
+nrow(filter(awards.count, count > 20))
+```
+We now have 21 award categories for the 21 year period 1995 to 2015, compared 
+to 16 before we updated the award names to the 2015 Academy award ceremony.
+
+Next I will join the academy award data with the script data set, and see how
+many years we have script data for for the different award categories. 
+```{r}
+#Joining on name
+combined.1995.to.2015 <- 
+   academy.winners.1995.to.2015 %>% 
+   inner_join(filter(script_summary,
+                     year >= 1995, year <=2015), 
+              by = c('Name' = 'title'))
+
+#Adding rows joining on film
+combined.1995.to.2015 <- academy.winners.1995.to.2015 %>% 
+   inner_join(filter(script_summary,
+                     year >= 1995, year <=2015), 
+              by = c('Film' = 'title')) %>% 
+  union(combined.1995.to.2015)
+
+#Checking for errors
+View(filter(combined.1995.to.2015, year != Year)[,c(1,12,3,5),])
+
+#Removing error match
+filter(combined.1995.to.2015, Name == 'Feast')
+combined.1995.to.2015 <- filter(combined.1995.to.2015, Name != 'Feast')
+#Ensuring correct count
+nrow(combined.1995.to.2015)
+```
+
+```{r}
+#Finding award categories with no matching script data
+no.award.matches <- academy.winners.1995.to.2015 %>% 
+  anti_join(combined.1995.to.2015, by='Award') %>%  
+  group_by(Award) %>% 
+  summarise(n = n())
+#Taking a look at the missing categories
+no.award.matches
+
+#Potential awards to include
+join_awards <- filter(awards.edited.count, count > 20 & count < 30 & 
+                        !(Award %in% no.award.matches$Award))$Award
+
+#Looking for suspicious missing Oscar winners
+View(
+  academy.winners.1995.to.2015 %>% 
+    filter(Award %in% join_awards) %>% 
+    anti_join(combined.1995.to.2015, by = c('Award', 'Year')) %>% 
+    arrange(desc(Year,Name)))
+```
+
+
+
+It is now time to check how many Academy award winning movies from 1995 to 2015 
+which exist in the script dataset. I will probably set a threshold between 10 
+and 15 winners for including an award category in the final dataset.
+```{r}
+combined.count <- 
+  combined.1995.to.2015 %>% 
+  group_by(Award) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+combined.count$in_2015 <- combined.count$Award %in% awards.2015
+View(combined.count)
+View(filter(combined.count, in_2015 == TRUE))
+
+```
+
 
 ```{r}
 View(filter(academy.winners, Ceremony == 88))#Winner == 'The Revenant')
