@@ -233,10 +233,77 @@ join_awards <- filter(awards.edited.count, count > 20 & count < 30 &
 #Looking for suspicious missing Oscar winners
 View(
   academy.winners.1995.to.2015 %>% 
-    filter(Award %in% join_awards) %>% 
+    filter(Award %in% join_awards & Award != 'Foreign Language Film') %>% 
     anti_join(combined.1995.to.2015, by = c('Award', 'Year')) %>% 
     arrange(desc(Year,Name)))
 ```
+Manual review of the filtered list above revealed a few more matches:
+Les Misérables - Les Misérables
+Precious - Precious: Based on the Novel 'Push' by Sapphire
+The Chronicles of Narnia: The Lion, the Witch and the Wardrobe - 
+The Chronicles of Narnia: The Lion, the Witch and the Wardrobe
+Adaptation. - Adaptation
+```{r}
+
+script_replace_academy_name <- c(
+'Precious' = "Precious: Based on the Novel 'Push' by Sapphire",
+'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe' = 
+'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ')
+
+academy_replace_script_name <- c(
+  'Les Misérables' = 'Les Mis<e9>rables',
+  'Adaptation.' = 'Adaptation')
+
+filter(academy.winners, grepl('Narnia', academy.winners$Name))
+filter(academy.winners, Name == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ')
+filter(academy.winners, grepl('Narnia', academy.winners$Film))
+filter(combined.1995.to.2015, Film == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe')
+filter(script_summary, title == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe') %>% 
+  inner_join(academy.winners, by = c('title' = 'Name'))
+
+subset(academy.winners, grepl('arnia', academy.winners$Name))
+
+subset(script_summary,grepl('rab', script_summary$title))
+subset(script_summary, script_summary[1] == 2754)
+
+colnames(script_summary)[1]
+
+script_summary[script_summary$script_id == 2754,]
+
+filter(script_summary, grepl('<', script_summary$title))
+
+View(script_summary)
+
+```
+
+Checking for trailing spaces.
+```{r}
+#install.packages('stringr')
+library(stringr)
+x <- "some text in a string"
+str_sub(x,,-2)
+
+removed_space_trail <- filter(academy.winners.1995.to.2015, str_sub(Name, -1) == " ")$Name %>% 
+  str_sub(,-2)
+
+removed_space_trail
+
+filter(script_summary, title %in% removed_space_trail)
+
+#Also checking for movies ending with a period (.)
+removed_period_trail <- filter(academy.winners.1995.to.2015, str_sub(Film, -1) == ".")$Film %>% 
+  str_sub(,-2) %>% 
+  union(
+    removed_period_trail <- filter(academy.winners.1995.to.2015, str_sub(Name, -1) == ".")$Name %>% 
+  str_sub(,-2)
+  )
+
+removed_period_trail
+```
+Only the Narnia movie gave a match, which I already had on my list of movie 
+names to change. No need to make further changes based on trailing spaces then. 
+Only actor names and a song were returned for the period trail, so no need to 
+check for movie matches.
 
 
 
