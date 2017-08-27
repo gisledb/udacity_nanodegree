@@ -70,6 +70,14 @@ script_summary <-
 
 ```
 
+Loading academy awards data
+```{r}
+academy.nominated <- read.csv('data/database.csv', strip.white = TRUE)
+str(academy.nominated)
+academy.nominated$Year_numeric <- as.numeric(as.character(academy.nominated$Year))
+academy.winners <- subset(academy.nominated, Winner == 1)
+```
+
 
 ```{r}
 View(characters)
@@ -265,12 +273,12 @@ View(
     filter(Award %in% join_awards & Award != 'Foreign Language Film') %>% 
     anti_join(combined.1995.to.2015, by = c('Award', 'Year')) %>% 
     arrange(desc(Year,Name)))
+
 ```
 Manual review of the filtered list above revealed a few more matches:
-Les Misérables - Les Misérables
 Precious - Precious: Based on the Novel 'Push' by Sapphire
 The Chronicles of Narnia: The Lion, the Witch and the Wardrobe - 
-The Chronicles of Narnia: The Lion, the Witch and the Wardrobe
+The Chronicles of Narnia: The Lion, the Witch and the Wardrobe (trailing space)
 Adaptation. - Adaptation
 ```{r}
 
@@ -279,9 +287,7 @@ script_replace_academy_name <- c(
 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ' =
 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe')
 
-academy_replace_script_name <- c(
-  'Les Mis<e9>rables' = 'Les Misérables',
-  'Adaptation' = 'Adaptation.')
+academy_replace_script_name <- c('Adaptation' = 'Adaptation.')
 
 filter(academy.winners, grepl('Narnia', academy.winners$Name))
 filter(academy.winners, Name == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ')
@@ -290,25 +296,12 @@ filter(combined.1995.to.2015, Film == 'The Chronicles of Narnia: The Lion, the W
 filter(script_summary, title == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe') %>% 
   inner_join(academy.winners, by = c('title' = 'Name'))
 
-subset(academy.winners, grepl('arnia', academy.winners$Name))
-
-subset(script_summary,grepl('rab', script_summary$title))
-subset(script_summary, script_summary[1] == 2754)
-
-colnames(script_summary)[1]
-
-script_summary[script_summary$script_id == 2754,]
-
-filter(script_summary, grepl('<', script_summary$title))
-
 ```
 
 Checking for trailing spaces.
 ```{r}
 #install.packages('stringr')
 library(stringr)
-x <- "some text in a string"
-str_sub(x,,-2)
 
 removed_space_trail <- filter(academy.winners.1995.to.2015, str_sub(Name, -1) == " ")$Name %>% 
   str_sub(,-2)
@@ -339,35 +332,25 @@ check for movie matches.
 academy.winners.1995.to.2015$Film <- recode(academy.winners.1995.to.2015$Film, !!!as.list(script_replace_academy_name))
 academy.winners.1995.to.2015$Name <- recode(academy.winners.1995.to.2015$Name, !!!as.list(script_replace_academy_name))
 
-recode(script_summary$title, !!!as.list(academy_replace_script_name)) %>% 
-  sort()
+tmp_more_matches <- 
+  academy.winners.1995.to.2015 %>% 
+  inner_join(filter(script_summary,
+                     year >= 1995, year <=2015), 
+              by = c('Name' = 'title')) %>% 
+  rbind(
+    academy.winners.1995.to.2015 %>% 
+    inner_join(filter(script_summary,
+                     year >= 1995, year <=2015), 
+              by = c('Film' = 'title')))
 
-View(script_summary)
-  
-filter(academy.winners, c(Name = 'Whiplash')
+combined.1995.to.2015  <- 
+  rbind(combined.1995.to.2015,
+    anti_join(filter(tmp_more_matches, Name != 'Feast'),
+                  combined.1995.to.2015, by = c('Award', 'Year'))
+        )
 
-typeof(script_replace_academy_name)
-
-as.list(academy_replace_script_name)
-
-x <- sample(c("a", "b", "c"), 10, replace = TRUE)
-x
-recode(x, a = "Apple")
-
-str(academy.winners.1995.to.2015)
-
-names(academy.winners.1995.to.2015)
-
-nrow(filter(academy.winners.1995.to.2015, Name == 'Ex Machina'))
-
-academy.winners.1995.to.2015[5,][5]
-
-View(academy.winners.1995.to.2015)
-
-str(academy.winners$Film)
-
-levels(academy.winners.1995.to.2015$Name)
-
+combined.1995.to.2015[movies$title %in% combined.1995.to.2015$Film]
+#[add some more arranging above, and merge film and name]
 ```
 
 
@@ -384,7 +367,6 @@ combined.count <-
 combined.count$in_2015 <- combined.count$Award %in% awards.2015
 View(combined.count)
 View(filter(combined.count, in_2015 == TRUE))
-
 ```
 
 
@@ -403,22 +385,6 @@ There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
 
 ```{r echo=FALSE, Univariate_Plots}
-#ensuring all movies have a match
-anti_join(characters, movies, by='script_id')
-
-nrow(characters)
-#Adding movie data to characters
-characters <- inner_join(characters, movies, by='script_id')
-#ensuring same count
-nrow(characters)
-
-head(movies)
-
-script_summary <- group_by(characters, script_id, title) %>% 
-  summarise(total_words = sum(words), characters = n()) %>% 
-  arrange(desc(total_words))
-
-script_summary %>% arrange(desc(characters))
 
 #plotting correlation between character count and total words
 ggplot(data = script_summary, aes(x = characters, y = total_words)) +
@@ -446,10 +412,10 @@ ggplot(movies, aes(x = year)) +
 
 
 ```{r}
-academy.nominated <- read.csv('data/database.csv', strip.white = TRUE)
-str(academy.nominated)
-academy.nominated$Year_numeric <- as.numeric(as.character(academy.nominated$Year))
-academy.winners <- subset(academy.nominated, Winner == 1)
+# academy.nominated <- read.csv('data/database.csv', strip.white = TRUE)
+# str(academy.nominated)
+# academy.nominated$Year_numeric <- as.numeric(as.character(academy.nominated$Year))
+# academy.winners <- subset(academy.nominated, Winner == 1)
 
 
 head(semi_join(by = c('title' = 'Film'), #| c('title' = 'Name'),
