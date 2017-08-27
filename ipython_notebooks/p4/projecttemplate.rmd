@@ -35,14 +35,41 @@ setwd('/Users/ggaasemyr/Documents/udacity/ipython_notebooks/p4/')
 
 characters <- read.csv('data/character_list5.csv', strip.white = TRUE)
 
+?read.csv()
+
 ?read.csv
 
 head(characters)
 str(characters)
-movies <- read.csv('data/meta_data7.csv')
+movies <- read.csv('data/meta_data7.csv', encoding = 'UTF-8')
 head(movies)
 str(movies)
+
+View(movies)
+
 ```
+
+Joining character data with movies, and summarizing word count per movie
+```{r}
+#ensuring all movies have a match
+anti_join(characters, movies, by='script_id')
+
+nrow(characters)
+#Adding movie data to characters
+characters <- inner_join(characters, movies, by='script_id')
+#ensuring same count
+nrow(characters)
+
+head(characters)
+
+#Summarizing word counts per movie
+script_summary <-
+  group_by(characters, script_id, title) %>% 
+  summarise(total_words = sum(words), characters = n()) %>% 
+  arrange(desc(total_words))
+
+```
+
 
 ```{r}
 View(characters)
@@ -94,12 +121,14 @@ View(filter(academy.winners, Year == 2014))
 tail(academy.winners)
 
 
-nrow(filter(inner_join(script_summary, movies, by = 'script_id',
+filter(anti_join(script_summary, movies, by = 'script_id',
            suffix = c('','.y'), 'name' == 'name.y')))
 
 script_summary <- inner_join(script_summary, movies, by = 'script_id',
            suffix = c('','.y'))[c('script_id','imdb_id','title', 'total_words',
                                   'characters','year')]
+
+View(script_summary)
 
 str(movies)
 
@@ -167,7 +196,7 @@ for (name in names(award_replacements)) {
 
   #Changing name to 2015 names
   academy.winners.1995.to.2015[(academy.winners.1995.to.2015$Award == 
-                                  name),]$Award <- award_replacements[count]
+                                 name),]$Award <- award_replacements[count]
 }
 
 ```
@@ -246,13 +275,13 @@ Adaptation. - Adaptation
 ```{r}
 
 script_replace_academy_name <- c(
-'Precious' = "Precious: Based on the Novel 'Push' by Sapphire",
-'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe' = 
-'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ')
+"Precious: Based on the Novel 'Push' by Sapphire" = 'Precious',
+'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ' =
+'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe')
 
 academy_replace_script_name <- c(
-  'Les Misérables' = 'Les Mis<e9>rables',
-  'Adaptation.' = 'Adaptation')
+  'Les Mis<e9>rables' = 'Les Misérables',
+  'Adaptation' = 'Adaptation.')
 
 filter(academy.winners, grepl('Narnia', academy.winners$Name))
 filter(academy.winners, Name == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ')
@@ -271,8 +300,6 @@ colnames(script_summary)[1]
 script_summary[script_summary$script_id == 2754,]
 
 filter(script_summary, grepl('<', script_summary$title))
-
-View(script_summary)
 
 ```
 
@@ -305,6 +332,43 @@ names to change. No need to make further changes based on trailing spaces then.
 Only actor names and a song were returned for the period trail, so no need to 
 check for movie matches.
 
+```{r}
+
+
+#Changing the names
+academy.winners.1995.to.2015$Film <- recode(academy.winners.1995.to.2015$Film, !!!as.list(script_replace_academy_name))
+academy.winners.1995.to.2015$Name <- recode(academy.winners.1995.to.2015$Name, !!!as.list(script_replace_academy_name))
+
+recode(script_summary$title, !!!as.list(academy_replace_script_name)) %>% 
+  sort()
+
+View(script_summary)
+  
+filter(academy.winners, c(Name = 'Whiplash')
+
+typeof(script_replace_academy_name)
+
+as.list(academy_replace_script_name)
+
+x <- sample(c("a", "b", "c"), 10, replace = TRUE)
+x
+recode(x, a = "Apple")
+
+str(academy.winners.1995.to.2015)
+
+names(academy.winners.1995.to.2015)
+
+nrow(filter(academy.winners.1995.to.2015, Name == 'Ex Machina'))
+
+academy.winners.1995.to.2015[5,][5]
+
+View(academy.winners.1995.to.2015)
+
+str(academy.winners$Film)
+
+levels(academy.winners.1995.to.2015$Name)
+
+```
 
 
 It is now time to check how many Academy award winning movies from 1995 to 2015 
@@ -421,6 +485,9 @@ filter(academy.nominated, Name == 'Titanic' | Film == 'Titanic')
 #checking for strange misses
 View(anti_join(academy.winners, script_summary, by = c('Film' = 'title') ) %>% 
   arrange(desc(Year)))
+
+repl
+?sub
 
 ifelse()
 
