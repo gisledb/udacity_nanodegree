@@ -287,7 +287,7 @@ script_replace_academy_name <- c(
 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ' =
 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe')
 
-academy_replace_script_name <- c('Adaptation' = 'Adaptation.')
+academy_replace_script_name <- c('Adaptation.' = 'Adaptation')
 
 filter(academy.winners, grepl('Narnia', academy.winners$Name))
 filter(academy.winners, Name == 'The Chronicles of Narnia: The Lion, the Witch and the Wardrobe ')
@@ -331,6 +331,7 @@ check for movie matches.
 #Changing the names
 academy.winners.1995.to.2015$Film <- recode(academy.winners.1995.to.2015$Film, !!!as.list(script_replace_academy_name))
 academy.winners.1995.to.2015$Name <- recode(academy.winners.1995.to.2015$Name, !!!as.list(script_replace_academy_name))
+script_summary$title <- recode(script_summary$title, !!!as.list(academy_replace_script_name))
 
 tmp_more_matches <- 
   academy.winners.1995.to.2015 %>% 
@@ -349,8 +350,29 @@ combined.1995.to.2015  <-
                   combined.1995.to.2015, by = c('Award', 'Year'))
         )
 
-combined.1995.to.2015[movies$title %in% combined.1995.to.2015$Film]
+?rbind()
+
+View(combined.1995.to.2015)
+
+View(combined.1995.to.2015[movies$title %in% combined.1995.to.2015$Film,])
 #[add some more arranging above, and merge film and name]
+
+head(movies$title %in% combined.1995.to.2015$Film)
+
+View(combined.1995.to.2015[c(TRUE,FALSE),])
+
+View(combined.1995.to.2015[c(TRUE,TRUE,FALSE,combined.1995.to.2015$Film == 'Lincoln',TRUE,FALSE),])
+
+filter(combined.1995.to.2015, movies$title %in% combined.1995.to.2015$Film,) %>% 
+  view()
+
+combined.1995.to.2015[combined.1995.to.2015$Film %in% movies$title,]$title <- 
+  combined.1995.to.2015[combined.1995.to.2015$Film %in% movies$title,]$Film
+
+
+combined.1995.to.2015[combined.1995.to.2015$Film %in% movies$title,]$Film
+
+
 ```
 
 
