@@ -352,7 +352,7 @@ combined.1995.to.2015  <-
 
 ?rbind()
 
-View(combined.1995.to.2015)
+View(combined.1995.to.2015$)
 
 View(combined.1995.to.2015[movies$title %in% combined.1995.to.2015$Film,])
 #[add some more arranging above, and merge film and name]
@@ -366,13 +366,28 @@ View(combined.1995.to.2015[c(TRUE,TRUE,FALSE,combined.1995.to.2015$Film == 'Linc
 filter(combined.1995.to.2015, movies$title %in% combined.1995.to.2015$Film,) %>% 
   view()
 
-combined.1995.to.2015[combined.1995.to.2015$Film %in% movies$title,]$title <- 
-  combined.1995.to.2015[combined.1995.to.2015$Film %in% movies$title,]$Film
+combined.1995.to.2015$title <- ifelse(
+  combined.1995.to.2015$Film %in% movies$title, 
+  combined.1995.to.2015$Film, combined.1995.to.2015$Name)
 
+#Ensuring correct data in title column
+filter(combined.1995.to.2015, !(title %in% movies$title))
 
-combined.1995.to.2015[combined.1995.to.2015$Film %in% movies$title,]$Film
+#Correcting one row
+combined.1995.to.2015[combined.1995.to.2015$Film == 'Adaptation',]$title <- 
+  'Adaptation'
 
+#Running "test" again
+filter(combined.1995.to.2015, !(title %in% movies$title))
+```
 
+```{r}
+#Writing dataframe to file
+
+?write.csv()
+
+write.csv(combined.1995.to.2015, 'data/oscar_winners_word_counts.csv',
+          row.names = FALSE)
 ```
 
 
