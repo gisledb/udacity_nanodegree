@@ -1,0 +1,75 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+
+```
+
+
+```{r}
+#Loading libraries
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+setwd('udacity/ipython_notebooks/p6/Project/')
+
+airbnb <- read.csv('data_files/san_francisco/airbnb_union.csv')
+
+View(airbnb)
+
+#Adding column for price per bedroom and person accomadated
+airbnb$price_per_bedroom <- airbnb$price / airbnb$bedrooms
+airbnb$price_per_person <- airbnb$price / airbnb$accommodates
+
+#Removing infinite values
+airbnb[is.na(airbnb$price_per_bedroom) & 
+         airbnb$price_per_bedroom == Inf,]$price_per_bedroom = NA
+
+summary(airbnb)
+
+subset(airbnb, price_per_bedroom == 0)
+
+nrow(subset(airbnb, price == 0))
+
+subset(airbnb, price == 0)
+
+quantile(airbnb$reviews, na.rm = TRUE, probs = seq(0,1,0.1))
+
+#grouping on host and date for Entire home owners
+gr_airbnb_hosts_and_date <- 
+  airbnb %>% 
+  subset(room_type == 'Entire home/apt') %>% 
+  group_by(host_id, date_collected)
+
+sum_gr_airbnb_hosts_and_date <- 
+  gr_airbnb_hosts_and_date %>% 
+  summarise(n = n())
+
+sum_gr_airbnb_hosts_and_date$bin <- 
+  if
+
+quantile(sum_gr_airbnb_hosts_and_date$n)
+
+ggplot(sum_gr_airbnb_hosts_and_date, aes(x = n, n = ..count..)) +
+  geom_point(stat = 'count') +
+  scale_y_log10()
+
+filter(sum_gr_airbnb_hosts_and_date, n > 1)
+
+ggplot(filter(sum_gr_airbnb_hosts_and_date, n > 2), 
+       aes(x = n, n = ..count..)) +
+  geom_point(stat = 'count')
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
