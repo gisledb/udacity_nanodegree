@@ -23,6 +23,10 @@ setwd('udacity/ipython_notebooks/p6/Project/')
 
 airbnb <- read.csv('data_files/san_francisco/airbnb_union.csv')
 
+#setting date and year
+airbnb$date_collected <- as.Date(airbnb$date_collected)
+airbnb$year <- format(airbnb$date_collected, "%Y")
+
 View(airbnb)
 
 #Adding column for price per bedroom and person accomadated
@@ -68,6 +72,39 @@ ggplot(filter(sum_gr_airbnb_hosts_and_date, n > 2),
        aes(x = n, n = ..count..)) +
   geom_point(stat = 'count')
 
+ggplot(data = airbnb, 
+       aes(color = room_type, x = date_collected)) +
+  geom_line(stat = 'count') +
+  scale_y_continuous(labels = percent)
+
+  
+?geom_line
+
+  #geom_histogram(stat='count')#point(stat = 'count') +
+
+str(airbnb)
+
+myplot <- ggplot(airbnb, aes(x = room_type, group = year)) + 
+          geom_bar(aes(y = ..prop..)) + 
+          scale_y_continuous(labels=scales::percent) +
+          ylab("relative frequencies") +
+          facet_grid(~year) + 
+  coord_flip()
+
+myplot
+
+#FIX
+myplot <- ggplot(sum_gr_airbnb_hosts_and_date, 
+                 aes(x = n, group = date_collected)) + 
+          geom_bar(aes(y = ..prop..)) + 
+          scale_y_continuous(labels=scales::percent) +
+          ylab("relative frequencies") +
+          facet_grid(~date_collected) #+ 
+#  coord_flip()
+
+myplot
+
+View(sum_gr_airbnb_hosts_and_date)
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
