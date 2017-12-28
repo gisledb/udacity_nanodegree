@@ -18,9 +18,15 @@ library(dplyr)
 library(ggplot2)
 ```
 
-```{r}
-setwd('udacity/ipython_notebooks/p6/Project/')
+```{r setup}
+knitr::opts_knit$set(root.dir =
+'~/Documents/udacity/ipython_notebooks/p6/Project/')
 
+```
+
+```{r}
+setwd('~/Documents/udacity/ipython_notebooks/p6/Project/')
+getwd()
 airbnb <- read.csv('data_files/san_francisco/airbnb_union.csv')
 
 #setting date and year
@@ -34,12 +40,11 @@ airbnb$price_per_bedroom <- airbnb$price / airbnb$bedrooms
 airbnb$price_per_person <- airbnb$price / airbnb$accommodates
 
 #Removing infinite values
-airbnb[is.na(airbnb$price_per_bedroom) & 
-         airbnb$price_per_bedroom == Inf,]$price_per_bedroom = NA
+is.na(airbnb$price_per_bedroom) <- do.call(cbind,lapply(airbnb$price_per_bedroom, is.infinite))
 
 summary(airbnb)
 
-subset(airbnb, price_per_bedroom == 0)
+subset(airbnb, is.na(price_per_bedroom))
 
 nrow(subset(airbnb, price == 0))
 
@@ -55,13 +60,62 @@ gr_airbnb_hosts_and_date <-
 
 sum_gr_airbnb_hosts_and_date <- 
   gr_airbnb_hosts_and_date %>% 
-  summarise(n = n())
+  summarise(n = n(),year = first(year)) %>% 
+  arrange(desc(n))
 
-sum_gr_airbnb_hosts_and_date$bin <- 
-  if
+head(sum_gr_airbnb_hosts_and_date)
+
+#Testing groups
+sum_gr_airbnb_hosts_and_date %>% 
+  group_by(host_id) %>% 
+  summarise(n = n()) %>% 
+  arrange(desc(n))
+
+subset(sum_gr_airbnb_hosts_and_date, host_id == 1091811)
+
+#Units which changed owners
+airbnb %>% 
+  group_by(room_id, host_id) %>% 
+  summarise(n = n()) %>%
+  group_by(room_id) %>% 
+  summarise(n_ = n()) %>% 
+  arrange(desc(n_)) %>% 
+  filter(n_ > 1)
+  
+
+#Checking for accurate totals
+sum(subset(sum_gr_airbnb_hosts_and_date, date_collected == 
+             as.Date('2014-05-11'))$n)
+nrow(subset(airbnb, date_collected == 
+             as.Date('2014-05-11') & room_type == 'Entire home/apt'))
+
+#Calculating percentage of multi-home owners in 2014
+#Creating variable for count of entire homes 2014
+count_entire_homes_2014 = sum(subset(sum_gr_airbnb_hosts_and_date, year == '2014')$n)
+#ensuring correct number
+count_entire_homes_2014 == nrow(subset(airbnb, year == '2014' & room_type == 'Entire home/apt'))
+#variable for multi home owners
+count_multiHomeOwners_2014 <- sum(subset(sum_gr_airbnb_hosts_and_date, year == '2014' & 
+             n > 2)$n)
+#Percentage of multi-home owners 2014
+count_multiHomeOwners_2014 / count_entire_homes_2014
+
+
+
+     
+as.Date('2014-05-11')
 
 quantile(sum_gr_airbnb_hosts_and_date$n)
 
+
+sum_gr_airbnb_hosts_and_date %>% 
+  inner_join(airbnb, by = )
+
+
+
+```
+
+```{r}
 ggplot(sum_gr_airbnb_hosts_and_date, aes(x = n, n = ..count..)) +
   geom_point(stat = 'count') +
   scale_y_log10()
@@ -76,6 +130,7 @@ ggplot(data = airbnb,
        aes(color = room_type, x = date_collected)) +
   geom_line(stat = 'count') +
   scale_y_continuous(labels = percent)
+
 
   
 ?geom_line
@@ -105,6 +160,39 @@ myplot <- ggplot(sum_gr_airbnb_hosts_and_date,
 myplot
 
 View(sum_gr_airbnb_hosts_and_date)
+```
+
+
+```{r}
+
+#Adding bins
+sum_gr_airbnb_hosts_and_date$bin <- cut(sum_gr_airbnb_hosts_and_date$n,breaks = c(0,2,3,4,1000), labels = c('1','2','3 & 4','5+'))
+
+sum_gr_airbnb_hosts_and_date %>% 
+  group_by(year,bin) %>% 
+  summarise(count = n()) %>% 
+  mutate(perc = round((freq = count / sum(count)),2)) %>% 
+  arrange(year,bin)
+
+sum_gr_airbnb_hosts_and_date %>% 
+  group_by(n) %>% 
+  summarise(count = n()) %>% 
+  mutate(perc = round((freq = count / sum(count)),2),
+         rec_count = count * n) %>% 
+  arrange(desc(count)) %>% 
+  summarise(sum(rec_count))
+
+nrow(filter(airbnb, date_collected == '2017-07-10'))
+
+length(unique(filter(airbnb, date_collected == '2017-07-10')$host_id))
+
+unique(c(1,2,3,3,2))
+
+?unique()
+
+?distinct
+
+View(filter(airbnb,host_id == 1479964))
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
