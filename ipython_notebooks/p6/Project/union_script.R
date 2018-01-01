@@ -49,14 +49,14 @@ View(table(dataset$date_collected))
 
 write.csv(dataset, file = 'airbnb_union.csv', row.names = FALSE)
 
-subset(dataset, date_collected == '2017-07-10')$price
-
-seq(0,1,0.1)
-
-
-
-quantile(subset(dataset, date_collected == '2015-08-21')$price, 
-         seq(0,1,0.01))
-quantile(subset(dataset, date_collected != '2015-08-21')$price, 
-         seq(0,1,0.01))
-
+# subset(dataset, date_collected == '2017-07-10')$price
+# 
+# seq(0,1,0.1)
+# 
+# 
+# 
+# quantile(subset(dataset, date_collected == '2015-08-21')$price, 
+#          seq(0,1,0.01))
+# quantile(subset(dataset, date_collected != '2015-08-21')$price, 
+#          seq(0,1,0.01))
+# 
