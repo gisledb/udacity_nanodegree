@@ -37,12 +37,12 @@ Feedback from my Udacity mentor Rodrigo on the version of the project I am submi
 
 #### **Resources**
 **Primary Data Source**  
-http://tomslee.net/airbnb-data-collection-get-the-data (the San Francisco section)
+http://tomslee.net/airbnb-data-collection-get-the-data (the San Francisco section)  
 **Data source for neighborhood map**  
 http://data.insideairbnb.com/united-states/ca/san-francisco/2017-10-02/visualisations/neighbourhoods.geojson
 
 **Books**  
-*The Visual Display of Quantitative Information (2nd edition)* by Edward Tufte, 2001
+*The Visual Display of Quantitative Information (2nd edition)* by Edward Tufte, 2001  
 *Storytelling with Data* by Cole Nussbaumer Knaflic, 2015
 
 While working on the project, I consulted the following sources for visualization and Tableau knowledge:
