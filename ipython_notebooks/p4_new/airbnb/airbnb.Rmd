@@ -26,6 +26,7 @@ a margin line to help you keep track of this guideline!
 library(ggplot2)
 library(tidyr)
 library(dplyr)
+library(scales)
 ```
 
 ```{r echo=FALSE, Load_the_Data}
@@ -42,6 +43,9 @@ at [{X}] different dates between [{Month}]2013 and July 2017. I originally
 downloaded the datasets from [{URL}] as [{count}] individual files, which I then 
 combined into a single file. For more details on this, see [{filename}].
 
+For details on the content of the columns, see 
+http://tomslee.net/airbnb-data-collection-get-the-data.
+
 # Univariate Plots Section
 
 > **Tip**: In this section, you should perform some preliminary exploration of
@@ -51,7 +55,7 @@ forget to add a comment after each plot or closely-related group of plots!
 There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
 
-I'll start by taking a look at some records to get an initial feel of the 
+I'll start my analysis by taking a look at some records to get an initial feel of the 
 dataset.
 ```{r echo=FALSE, Univariate_Plots}
 #Getting an initital look at some rows
@@ -78,16 +82,113 @@ I am already seeing some trends in the data. For example, based on the 1st
 quartile and max value for overall_satisfication, I suspect that very few 
 listings have ratings below 4 of 5. Let's plot this to take a closer look.
 
-```{r}
-plot = ggplot(airbnb, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+```{r echo=FALSE, Univariate_Plots}
+
+data = airbnb
+
+plot = ggplot(data, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
   geom_bar() +
   scale_x_continuous(breaks = seq(0,5,1)) +
   geom_text(stat='count',aes(
-    label=round(..count../sum(..count..),4),vjust=-0.5))
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+
+bar_plot
+
+```
+
+The plot confirms my suspicion: 81.9% of the ratings are 4 or higher, with more 
+than 50% of the ratings being 5. However, it is interesting to see that 16.8% of 
+the rooms have a rating of 0. Let's take a closer look at some summary statistics
+for these records to see if there's a data quality issue.
+
+```{r}
+airbnb %>% 
+  filter(overall_satisfaction==0) %>% 
+  summary()
+```
+The first thing I notice is that there seem to be a large amount of records 
+with 0 reviews. According to the dataset description the overall_satisfaction 
+consists of " The average rating (out of five) that the listing has received from 
+those visitors who left a review." We can therefore assume that records with 0 
+reviews should have rating set to NA, not 0-5. Let's take a look at how many 
+records have 0 reviews and an overall_satisfaction between 0 and 5.
+
+```{r}
+airbnb %>% 
+  filter(reviews == 0 & !is.na(overall_satisfaction)) %>% 
+  nrow()
+
+```
+
+About 8% of the records match this criteria. Let's plot the overall_satisfaction 
+for these records.
+
+```{r echo=FALSE, Univariate_Plots}
+data = filter(airbnb, reviews == 0 & !is.na(overall_satisfaction))
+
+plot = ggplot(data, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0,5,1)) +
+  geom_text(stat='count',aes(
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+
+plot
+
+```
+
+It looks like all 0 reviews records with a value in overall_satisfaction has it 
+set to 0. I'll run a filtered querry to make sure.
+
+```{r}
+airbnb %>% 
+  filter(reviews == 0 & overall_satisfaction > 0)
+```
+
+3 out of 205k records is practically 0. I will now plot the overall_satisfaction 
+column again excluding the 0 reviews records.
+
+```{r}
+
+plot = ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0,5,1)) +
+  geom_text(stat='count',aes(
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
 
 plot
 ```
+When excluding the zero reviews records, the percentage of records with an 
+overall ranking of 0 goes down to 7.5. That's still a fair amount, but it's much 
+more believeable than before. Let's run a summary query on these recorfs to see 
+if we can spot any trends.
 
+```{r}
+airbnb %>% 
+  filter(overall_satisfaction==0, reviews != 0) %>% 
+  summary()
+```
+
+What stands out to me is that a large portion of these records have only one 
+review. Let's compare the distribution of the amount of reviews of these records 
+with the full sample[].
+
+```{r}
+
+p1 = ggplot(filter(airbnb, overall_satisfaction == 0), aes(x = reviews, fill = I('#099DD9') ) ) +
+  geom_bar() +
+#  scale_x_continuous(breaks = seq(0,5,1)) +
+  geom_text(stat='count',aes(
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+
+p2 = ggplot(filter(airbnb), aes(x = reviews, fill = I('#099DD9') ) ) +
+  geom_bar() +
+  xlim(0,200)
+# scale_x_continuous(limits = (0,200))
+#  geom_text(stat='count',aes(
+#    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+
+grid.arrange(p1,p2,nrow = 1)
+```
 
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
