@@ -27,6 +27,7 @@ library(ggplot2)
 library(tidyr)
 library(dplyr)
 library(scales)
+library(gridExtra)
 ```
 
 ```{r echo=FALSE, Load_the_Data}
@@ -60,15 +61,21 @@ dataset.
 ```{r echo=FALSE, Univariate_Plots}
 #Getting an initital look at some rows
 head(airbnb)
+```
+```{r echo=FALSE, Univariate_Plots}
+#Getting an initital look at some rows
 tail(airbnb)
-
 ```
 
 Next I'll get some information about the data types.
 
 ```{r echo=FALSE, Univariate_Plots}
 str(airbnb)
+```
 
+```{r}
+#Setting correct format for dates
+airbnb$date_collected <- as.Date(airbnb$date_collected)
 ```
 
 I now want to get some summary statistics for the different fields in the 
@@ -214,9 +221,74 @@ plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
 plot
 ```
 ```{r}
-quantile(airbnb$price, probs = seq(0,1,0.01))
+quantile(airbnb$price, probs = seq(0,1,0.01)) %>% 
+  grid.table()
 ```
 
+```{r}
+length((airbnb$date_collected))
+min((airbnb$date_collected))
+max((airbnb$date_collected))
+
+?grid.table
+
+```
+
+
+```{r}
+#minstay
+plot = ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
+  geom_bar()
+
+plot
+```
+```{r}
+#zooming in on <100 days
+plot = ggplot(subset(airbnb, minstay <=100), aes(x = minstay, fill = I('#099DD9') ) ) +
+  geom_bar() + 
+  scale_x_continuous(breaks = seq(0,100,10))
+
+plot
+```
+```{r}
+#zooming in on <10 days
+plot = ggplot(subset(airbnb, minstay <=10), aes(x = minstay, fill = I('#099DD9') ) ) +
+  geom_bar() + 
+  scale_x_continuous(breaks = seq(0,10,1))
+
+plot
+```
+The majority of listings have 1-3 days set as the minimum length of time for renting their unit. Almost no hosts asks for a longer
+minimum stay than 7 days, although there is a small spike at 30 days, indicating that some units are 
+listed as monthly rentals.
+
+```{r}
+#bedrooms
+plot = ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
+
+plot
+
+```
+
+```{r}
+#accommodates
+plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
+  geom_bar()
+#  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
+
+plot
+```
+
+```{r}
+#accommodates
+plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
+  geom_bar()
+#  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
+
+plot
+```
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
 each code block and the end / start of your Markdown text so that it is
@@ -231,6 +303,9 @@ reflect on and summarize what you've found. Use the questions below to help you
 gather your observations and add your own if you have other thoughts!
 
 ### What is the structure of your dataset?
+There are 205,532 listings in the dataset. The listings were collected at 28 
+different dates. between November 2013 and October 2017.
+
 
 ### What is/are the main feature(s) of interest in your dataset?
 
