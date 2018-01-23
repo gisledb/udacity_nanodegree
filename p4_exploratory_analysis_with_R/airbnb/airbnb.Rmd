@@ -220,9 +220,39 @@ plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
 
 plot
 ```
+[something something]
+
+
+
 ```{r}
 quantile(airbnb$price, probs = seq(0,1,0.01)) %>% 
   grid.table()
+```
+
+I suspect size of the units heavily affect price. Therefore I will make a couple 
+extra variables to look at the prices at the same room levels[].
+
+```{r}
+airbnb$price_per_bedroom = airbnb$price / airbnb$bedrooms
+
+#Removing infinite values
+is.na(airbnb$price_per_bedroom) <- do.call(cbind,lapply(airbnb$price_per_bedroom, is.infinite))
+
+
+```
+
+
+```{r}
+airbnb$room_type
+
+airbnb %>% 
+  group_by(room_type) %>% 
+  summarise(n = n(), min_rooms = min(bedrooms, na.rm = TRUE), 
+            max_rooms = max(bedrooms, na.rm = TRUE))
+
+?summarise
+
+max(airbnb$bedrooms, na.rm = TRUE)
 ```
 
 ```{r}
