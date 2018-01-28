@@ -238,7 +238,10 @@ airbnb$price_per_bedroom = airbnb$price / airbnb$bedrooms
 #Removing infinite values
 is.na(airbnb$price_per_bedroom) <- do.call(cbind,lapply(airbnb$price_per_bedroom, is.infinite))
 
-
+airbnb %>% 
+  group_by(room_type) %>% 
+  summarise(n = n(), avg_price = mean(price, na.rm = TRUE), 
+            avg_bedroom_price = mean(price_per_bedroom, na.rm = TRUE))
 ```
 
 
@@ -339,15 +342,32 @@ different dates. between November 2013 and October 2017.
 
 ### What is/are the main feature(s) of interest in your dataset?
 
+From my initial analysis I consider price and date to be the main features of 
+interest in the data set. 
+
 ### What other features in the dataset do you think will help support your \
-investigation into your feature(s) of interest?
+### investigation into your feature(s) of interest?
+I believe number of bedrooms and room type are other interesting 
+parameters which will greatly affect the price.
 
 ### Did you create any new variables from existing variables in the dataset?
+Yes, I created price per bedroom, as that seemed to be the best indicator of 
+size. Without taking unit size into account it is very hard to get a true price 
+picture.
 
 ### Of the features you investigated, were there any unusual distributions? \
-Did you perform any operations on the data to tidy, adjust, or change the form \
-of the data? If so, why did you do this?
+It is a little surprising to me how large the portion of 1 bedroom apartments is. 
+More than half of the units on the market fit into this category. There's a chance 
+some of these records really inform about the number of rooms available, not 
+the actual amount of rooms in the unit. It will be interesting to later take a look at 
+the bedroom distribution across room type.
 
+### Did you perform any operations on the data to tidy, adjust, or change the form \
+### of the data? If so, why did you do this?
+Yes. I initially downloaded 28 separate files which I merged to one file using 
+the tidy function union. For full details about this process, see [].
+In the file you are reading now I have changed the data type of the date_collected 
+column from factor to date, for easier handling later.
 
 # Bivariate Plots Section
 
@@ -356,6 +376,9 @@ between variables might be interesting to look at in this section? Don't limit
 yourself to relationships between a main output feature and one of the
 supporting variables. Try to look at relationships between supporting variables
 as well.
+
+In this section I'd like to take a closer look at the relationship between price 
+and []. 
 
 ```{r echo=FALSE, Bivariate_Plots}
 
