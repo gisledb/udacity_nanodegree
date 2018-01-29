@@ -377,10 +377,70 @@ yourself to relationships between a main output feature and one of the
 supporting variables. Try to look at relationships between supporting variables
 as well.
 
-In this section I'd like to take a closer look at the relationship between price 
-and []. 
+In this section, among other things I want to take a closer look at the relationship 
+between price and neighborhood, and price and time.
+
+```{r}
+ggplot(airbnb, aes(x = neighborhood, y = price)) +
+  geom_bar(stat = 'summary', fun.y = mean) +
+  coord_flip()
+```
+
 
 ```{r echo=FALSE, Bivariate_Plots}
+
+ggplot(airbnb, aes(y = price)) +
+  geom_bar(stat = 'summary', fun.y = mean, aes(x = reorder(neighborhood, price))) +
+  coord_flip()
+
+```
+
+```{r}
+airbnb %>% 
+  group_by(neighborhood) %>% 
+  summarise(avg = mean(price), med = median(price)) %>% 
+  arrange(desc(avg))
+```
+
+
+Presidio Heights and Presidio are clearly the most expensive neighborhoods, 
+with an average price per night above $440. The most affordable neighborhods are 
+Treasure Island, Crocker Amazon and Lakeshore. This makes sense, as they are all 
+on the outskirts of the San Francisco city limits. Based on my local knowledge of 
+the city there are no surprises in this figure.
+
+```{r echo=FALSE, Bivariate_Plots}
+
+ggplot(airbnb, aes(y = price)) +
+  geom_bar(stat = 'summary', fun.y = mean, 
+           aes(x = reorder(neighborhood, price), fill = I('gray50'))) +
+  geom_bar(stat = 'summary', fun.y = mean, 
+           aes(x = reorder(neighborhood, price),
+               y = price_per_bedroom, fill = I('deepskyblue'))) +
+  coord_flip() +
+  scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
+                    labels = c('Price', 'Price per bedroom'))
+
+
+```
+
+When we compare the price to price per bedroom, Presidio Heights is no longer 
+the most expensive neighborhoods. Now it seems like Downtown and the Financial 
+District has the most expensive units. Let's see if looking at median instead of 
+mean changes things.
+
+```{r echo=FALSE, Bivariate_Plots}
+
+ggplot(airbnb, aes(y = price)) +
+  geom_bar(stat = 'summary', fun.y = median, 
+           aes(x = reorder(neighborhood, price), fill = I('gray50'))) +
+  geom_bar(stat = 'summary', fun.y = median, 
+           aes(x = reorder(neighborhood, price),
+               y = price_per_bedroom, fill = I('deepskyblue'))) +
+  coord_flip() +
+  scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
+                    labels = c('Price', 'Price per bedroom'))
+
 
 ```
 
