@@ -313,6 +313,16 @@ plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
 
 plot
 ```
+```{r}
+#accommodates
+plot = ggplot(airbnb, aes(x = neighborhood, fill = I('#099DD9') ) ) +
+  geom_bar() + 
+  coord_flip() 
+#  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
+
+plot
+```
+
 
 ```{r}
 #accommodates
@@ -398,7 +408,7 @@ ggplot(airbnb, aes(y = price)) +
 ```{r}
 airbnb %>% 
   group_by(neighborhood) %>% 
-  summarise(avg = mean(price), med = median(price)) %>% 
+  summarise(n = n(), price = mean(price), med = median(price), min = min(price), max = max(price)) %>% 
   arrange(desc(avg))
 ```
 
@@ -427,21 +437,95 @@ ggplot(airbnb, aes(y = price)) +
 When we compare the price to price per bedroom, Presidio Heights is no longer 
 the most expensive neighborhoods. Now it seems like Downtown and the Financial 
 District has the most expensive units. Let's see if looking at median instead of 
-mean changes things.
+mean changes things. One thing to note is that this plot excludes any units 
+with zero bedrooms  (roughly 13% of the records). 
+
+```{r}
+ggplot(airbnb, aes(y = price)) +
+  geom_bar(stat = 'summary', fun.y = median, 
+           aes(x = reorder(neighborhood, price),
+               y = price_per_bedroom, fill = I('deepskyblue'))) +
+  coord_flip()
+```
+
 
 ```{r echo=FALSE, Bivariate_Plots}
 
 ggplot(airbnb, aes(y = price)) +
   geom_bar(stat = 'summary', fun.y = median, 
-           aes(x = reorder(neighborhood, price), fill = I('gray50'))) +
+           aes(x = reorder(neighborhood, price, FUN = median), fill = I('gray50'))) +
   geom_bar(stat = 'summary', fun.y = median, 
-           aes(x = reorder(neighborhood, price),
+           aes(x = reorder(neighborhood, price,  FUN = median),
                y = price_per_bedroom, fill = I('deepskyblue'))) +
   coord_flip() +
   scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
-                    labels = c('Price', 'Price per bedroom'))
+                    labels = c('Price', 'Price per bedroom')) +
+  labs(x = 'Neighborhood')
 
 
+
+```
+
+Looking at median instead of mean, the situation changes quite a bit. For absolute 
+price, Presidio Heights and Presidio drop to 4th and 5th places, while Marina, 
+Pacific Heights and Russian Hill now occupy the top 3. Presidio has the highest 
+price per bedroom, with Marina and Chinatown having the 2nd and 3rd highest 
+bedroom price.
+
+Comparing the mean and median plots, it seems like some neighborhoods have some 
+very expensive units, increasing the mean values. Especially Presidio and Presidio 
+Heights seems to be affected by this. It doesn't seem to be same case the other 
+way around, as all neighborhoods seem to have a higher mean than median price. 
+Lets create another plot to confirm this.
+
+```{r}
+
+ggplot(airbnb, aes(y = price)) +
+  geom_bar(stat = 'summary', fun.y = mean, 
+           aes(x = reorder(neighborhood, price, FUN = mean), fill = I('gray50'))) +
+  geom_bar(stat = 'summary', fun.y = median, 
+           aes(x = reorder(neighborhood, price),
+               fill = I('deepskyblue'))) +
+  coord_flip() +
+  scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
+                    labels = c('Median price', 'Mean price')) +
+  labs(x = 'Neighborhood')
+```
+
+
+```{r}
+ggplot(airbnb, aes(y = price)) +
+  geom_bar(stat = 'summary', fun.y = mean, 
+           aes(x = reorder(neighborhood, price, FUN = mean), fill = I('gray50'))) +
+  geom_bar(stat = 'summary', fun.y = median, 
+           aes(x = reorder(neighborhood, price),
+               fill = I('deepskyblue'))) +
+  coord_flip() +
+  scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
+                    labels = c('Median price', 'Mean price')) +
+  labs(x = 'Neighborhood')
+```
+
+Indeed, no neightborhood has a higher median price than mean price. 
+
+```{r}
+neighborhood_price = airbnb %>%
+  group_by(neighborhood) %>% 
+  summarise(n = n(), mean = mean(price), median = median(price), 
+            min = min(price), max = max(price)) %>% 
+  arrange(desc(mean))
+
+neighborhood_price
+
+#neighborhood_price$mean - 
+  
+neighborhood_price$med
+
+
+ggplot(neighborhood_price, aes(y = (median / mean), x = neighborhood)) +
+  geom_bar(stat = 'identity') + 
+  coord_flip()
+  
 ```
 
 # Bivariate Analysis
