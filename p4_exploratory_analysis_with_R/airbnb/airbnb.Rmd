@@ -357,8 +357,9 @@ interest in the data set.
 
 ### What other features in the dataset do you think will help support your \
 ### investigation into your feature(s) of interest?
-I believe number of bedrooms and room type are other interesting 
-parameters which will greatly affect the price.
+Price variations across neighborhoods will be interesting to take a look at. I 
+believe number of bedrooms and room type are other interesting parameters which 
+will greatly affect the price.
 
 ### Did you create any new variables from existing variables in the dataset?
 Yes, I created price per bedroom, as that seemed to be the best indicator of 
@@ -436,14 +437,17 @@ ggplot(airbnb, aes(y = price)) +
 
 When we compare the price to price per bedroom, Presidio Heights is no longer 
 the most expensive neighborhoods. Now it seems like Downtown and the Financial 
-District has the most expensive units. Let's see if looking at median instead of 
-mean changes things. One thing to note is that this plot excludes any units 
-with zero bedrooms  (roughly 13% of the records). 
+District has the most expensive units. One thing to note is that this plot excludes any units 
+with zero bedrooms  (roughly 13% of the records). Let's see if looking at median instead of 
+mean changes things.
 
 ```{r}
+
+#UNSURE what this is for, probably remove
+
 ggplot(airbnb, aes(y = price)) +
   geom_bar(stat = 'summary', fun.y = median, 
-           aes(x = reorder(neighborhood, price),
+           aes(x = reorder(neighborhood, price, FUN = median),
                y = price_per_bedroom, fill = I('deepskyblue'))) +
   coord_flip()
 ```
@@ -479,21 +483,6 @@ way around, as all neighborhoods seem to have a higher mean than median price.
 Lets create another plot to confirm this.
 
 ```{r}
-
-ggplot(airbnb, aes(y = price)) +
-  geom_bar(stat = 'summary', fun.y = mean, 
-           aes(x = reorder(neighborhood, price, FUN = mean), fill = I('gray50'))) +
-  geom_bar(stat = 'summary', fun.y = median, 
-           aes(x = reorder(neighborhood, price),
-               fill = I('deepskyblue'))) +
-  coord_flip() +
-  scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
-                    labels = c('Median price', 'Mean price')) +
-  labs(x = 'Neighborhood')
-```
-
-
-```{r}
 ggplot(airbnb, aes(y = price)) +
   geom_bar(stat = 'summary', fun.y = mean, 
            aes(x = reorder(neighborhood, price, FUN = mean), fill = I('gray50'))) +
@@ -509,6 +498,8 @@ ggplot(airbnb, aes(y = price)) +
 Indeed, no neightborhood has a higher median price than mean price. 
 
 ```{r}
+#Creating table for neighborhood price
+
 neighborhood_price = airbnb %>%
   group_by(neighborhood) %>% 
   summarise(n = n(), mean = mean(price), median = median(price), 
@@ -526,7 +517,272 @@ ggplot(neighborhood_price, aes(y = (median / mean), x = neighborhood)) +
   geom_bar(stat = 'identity') + 
   coord_flip()
   
+?reorder
 ```
+
+```{r}
+ggplot(neighborhood_price, aes(y = (mean / median), x = neighborhood)) +
+# ggplot(neighborhood_price, aes(y = mean, x = neighborhood)) +
+  geom_point(aes(x = reorder(neighborhood, (mean / median), FUN = 'identity'))) +
+  geom_bar(stat = 'identity', width = 0.1, aes(fill = I('gray50'))) + 
+  ylab('Median price ratio of mean') +
+  coord_flip() +
+  theme_classic()
+
+?theme_bw()
+```
+
+In this plot, which compares median and mean price per neighborhood), 
+we see that the median price in Presidio Heights is almost 2.5 times greater 
+than the mean price. It will be interesting to take a look at the effect of 
+room type in the multivariate section later in this [term]. I also want to plot 
+the prices per neighborhood in a scatter plot.
+
+```{r}
+#Price per bedroom vs price. Maybe remove
+
+ggplot(airbnb, aes(x = price_per_bedroom, y = price)) +
+  geom_point()
+
+#Finding the outlier
+subset(airbnb, price == max(airbnb$price))
+```
+
+```{r}
+#Neighborhood counts over time
+#Maybe move to next section
+
+```
+
+```{r}
+#Price over time, mean
+
+# ggplot(airbnb, aes(x = date_collected, y = price)) +
+#     geom_line(stat = 'summary', fun.y = mean, aes(color = neighborhood))
+
+ggplot(airbnb, aes(x = date_collected, y = price)) +
+  geom_line(stat = 'summary', fun.y = mean) + 
+  ylab('Mean price')
+
+```
+
+Except for one outlier date in 2015, the mean price have stayed fairly consistent 
+roughly between 210 and 270,over the whole time period in the dataset (late 2013 
+to mid-2017). This makes me curious about whether there was a special event in 
+San Francisco at the time the data was collected which increased the prices 
+dramatically, or if this is due to some outliers. Let's see if the median price 
+follows the same trend.
+
+```{r}
+#Price over time, median
+
+ggplot(airbnb, aes(x = date_collected, y = price)) +
+  geom_line(stat = 'summary', fun.y = median) + 
+  ylab('Median price')
+
+```
+
+At first glance the median price appears to be much more volatile than the mean 
+price, but this is mainly due to the y axis being much more detailed[] in this 
+last plot. Let's plot the statistics together to get a clearer picture.
+
+```{r}
+ggplot(airbnb, aes(x = date_collected, y = price)) +
+  geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median'))
+
+```
+
+Here we see that median price in general follows the trend of the mean price. 
+One interesting exception is the outlier date from the mean chart, which is not 
+an outlier for median price. To me this indicates that the 2015 outlier date has 
+some very high outlier prices. Let's investigate this further.
+
+```{r}
+#Number of records per date
+airbnb %>% 
+  group_by(date_collected) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = date_collected, y = count)) +
+  geom_line()
+```
+
+There is not an unusal number of records for any dates in 2015, so this is probably 
+not a relevant factor. Next I'll take a closer look at the data for the mean price 
+outlier date.
+
+```{r}
+#Finding the outlier date
+
+airbnb %>%
+  group_by(date_collected) %>% 
+  summarise(n = n(), mean = mean(price), median = median(price), 
+            min = min(price), max = max(price)) %>% 
+  arrange(desc(mean)) %>% 
+  head()
+
+```
+
+2015-08-21 is the outlier date. 
+
+```{r}
+print("Running the summary() function on all the records.")
+summary(airbnb)
+
+print("Running the summary() function on the 2015-08-21 records.")
+subset(airbnb, date_collected == '2015-08-21') %>% 
+  summary()
+
+```
+
+Here I'm mostly interested in comparing quantiles for price and price_per_bedroom. 
+These variables are not drastically different between the 2015-08-21 records and 
+all records.
+
+```{r}
+#Boxplot of price per date
+
+ggplot(airbnb, aes(x = date_collected, group = date_collected, y = price)) +
+  geom_boxplot() + 
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months')
+
+```
+```{r}
+ggplot(airbnb, aes(x = date_collected, group = date_collected, y = price)) +
+  geom_boxplot() + 
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ylim(0,10000) +
+  ggtitle('Boxplot with price<=10000') +
+  theme(title = element_text(size=9))
+
+```
+```{r}
+ggplot(airbnb, aes(x = date_collected, group = date_collected, y = price)) +
+  geom_boxplot() + 
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ylim(0,1000) +
+  ggtitle('Boxplot with price<=1000') +
+  theme(title = element_text(size=9))
+
+```
+
+The boxplots indicates that the outliers above price 1000 are to blame, but 
+doesn't give much more information than that. [rephrase] 
+
+```{r}
+
+subset(airbnb, price >= quantile(airbnb$price, 0.95)) %>% 
+  ggplot(aes(x = date_collected)) +
+  geom_bar() +
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ggtitle('Top 5% prices in dataset') +
+  theme(title = element_text(size=9))
+```
+
+```{r}
+subset(airbnb, price >= quantile(airbnb$price, 0.98)) %>% 
+  ggplot(aes(x = date_collected)) +
+  geom_bar() +
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ggtitle('Top 2% prices in dataset') +
+  theme(title = element_text(size=9))
+```
+
+```{r}
+subset(airbnb, price >= quantile(airbnb$price, 0.99)) %>% 
+  ggplot(aes(x = date_collected)) +
+  geom_bar() +
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ggtitle('Top 1% prices in dataset') +
+  theme(title = element_text(size=9))
+```
+
+Looking at the two bar charts above, we see that the August 2015 date does not 
+have exceptionally many records with price higher than the top 5% prices in the 
+whole dataset, but the August 2015 records do have a very large amount of the 
+top 2% of prices in the dataset, and almost 3 times as many of the 1% top prices
+as any other date in the dataset. Since this is showing absolute [] counts, and 
+some of the later dates have more records than the August 2015 date, this becomes 
+even more relevant [rephrase].
+
+
+```{r}
+#Percentile dataframe for all dates and the August 2015 date
+df_percentiles = data.frame(all_records = quantile(airbnb$price, seq(0,1,0.01)),
+           August_2015 = subset(
+             airbnb, date_collected == '2015-08-21')$price %>% 
+  quantile(seq(0,1,0.01)) )
+
+#Creating row of numeric values for percentile for easier use with ggplot
+df_percentiles$percentile <- seq(0,100,1)
+
+
+```
+
+```{r}
+#Plotting percentiles
+melted = melt(df_percentiles,id = c('percentile'))
+
+ggplot(melted, aes(x = percentile, y = value)) +
+  geom_line(aes(color = variable), stat = 'identity') + 
+  scale_y_continuous(breaks = c(500,1000,5000,10000,20000,30000)) + 
+  scale_x_continuous(breaks = seq(0,100,5))
+```
+Judging from the above plot, the August_2015 price followed the general price 
+trend up to about the 90th percentile. Let's see if we can get some more details 
+by applying a log transformation[].
+
+```{r}
+#Plotting percentiles, log scale
+ggplot(melted, aes(x = percentile, y = value)) +
+  geom_line(aes(color = variable), stat = 'identity') + 
+  scale_y_log10(breaks = c(0,100,500,1000,5000,10000,20000,30000)) + #pretty_breaks(5)) + 
+  scale_x_continuous(breaks = seq(0,100,5))
+
+```
+
+We get a little bit more details from the log transformation, but the trend 
+stays the same:the August 2015 price follows the general trend until about the 
+90th percentile, when the August 2015 price starts to become much higher than for 
+the same percentiles in the whole dataset. I will plot this one last time to get 
+a clearer picture of what is going on [rephrase].
+
+```{r}
+#Plotting percentiles, log scale
+subset(melted, percentile >= 92) %>% 
+  ggplot(aes(x = percentile, y = value)) +
+  geom_line(aes(color = variable), stat = 'identity') + 
+  scale_x_continuous(breaks = seq(90,100,1)) +
+  scale_y_continuous(breaks = seq(0,30000,1000))
+
+```
+
+Compared to the August_2015, the 92nd to 99th percentiles for all_records are 
+very flat. From the 95th percentile, the August_2015 values are many times larger 
+than the values for all_records, only being surpassed at the max value at the 
+100th percentile.
+
+```{r}
+#Move to later
+ggplot(subset(airbnb, aes(x = date_collected, y = overall_satisfaction)) +
+  geom_line(stat = 'summary', fun.y = mean) + 
+  ylab('Median price')
+
+View(subset(airbnb, date_collected > as.Date('2016/12/31')))
+
+#It's due to some NA values being set to 0 instead. Especially for 2017.
+
+#Further investigations
+ggplot(subset(airbnb, overall_satisfaction > 0), 
+       aes(x = date_collected, y = overall_satisfaction)) +
+  geom_line(stat = 'summary', fun.y = mean) + 
+  ylab('Median price')
+
+```
+
 
 # Bivariate Analysis
 
@@ -534,14 +790,22 @@ ggplot(neighborhood_price, aes(y = (median / mean), x = neighborhood)) +
 here. Use the questions below to guide your discussion.
 
 ### Talk about some of the relationships you observed in this part of the \
-investigation. How did the feature(s) of interest vary with other features in \
-the dataset?
+### investigation. How did the feature(s) of interest vary with other features in \
+### the dataset?
+
+There is a fairly clear relationship between price and neighborhood. This makes 
+sense, as some neighborhoods are more desirable than others. Based on local 
+knowledge about San Francisco, it seems like the [blabla].
+
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
 
+[Follow up]
+
 ### What was the strongest relationship you found?
 
+[Follow up]
 
 # Multivariate Plots Section
 
