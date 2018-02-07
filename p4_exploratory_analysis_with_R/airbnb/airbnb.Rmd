@@ -152,7 +152,32 @@ airbnb %>%
 ```
 
 3 out of 205k records is practically 0. I will now plot the overall_satisfaction 
-column again excluding the 0 reviews records.
+column again excluding the 0 reviews records. I will also update the airbnb 
+dataframe and change the overall_satisfaction score from 0 to NA for these 
+records.
+
+```{r}
+#For QA
+pre_change <- airbnb %>% 
+  group_by(overall_satisfaction) %>% 
+  summarise(n = n())
+
+#Changing the overall_satisfaction score of 0 reviews records to NA
+airbnb$overall_satisfaction <- 
+  if_else(airbnb$reviews == 0, NA_real_, airbnb$overall_satisfaction)
+
+#For QA
+post_change <- airbnb %>% 
+  group_by(overall_satisfaction) %>% 
+  summarise(n = n())
+
+#QA
+pre_change
+post_change
+pre_change - post_change
+
+```
+
 
 ```{r}
 
@@ -166,7 +191,7 @@ plot
 ```
 When excluding the zero reviews records, the percentage of records with an 
 overall ranking of 0 goes down to 7.5. That's still a fair amount, but it's much 
-more believeable than before. Let's run a summary query on these recorfs to see 
+more believeable than before. Let's run a summary query on these records to see 
 if we can spot any trends.
 
 ```{r}
@@ -299,11 +324,22 @@ listed as monthly rentals.
 #bedrooms
 plot = ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
   geom_bar() +
-  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
+  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1)) +
+    geom_text(stat='count',aes(
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
 
 plot
 
 ```
+
+```{r}
+ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0,5,1)) +
+  geom_text(stat='count',aes(
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+```
+
 
 ```{r}
 #accommodates
@@ -377,8 +413,13 @@ the bedroom distribution across room type.
 ### of the data? If so, why did you do this?
 Yes. I initially downloaded 28 separate files which I merged to one file using 
 the tidy function union. For full details about this process, see [].
+
 In the file you are reading now I have changed the data type of the date_collected 
-column from factor to date, for easier handling later.
+column from factor to date, for easier handling later.[rephrase] During my 
+analysis I found a data error which I corrected: 15 900[check] records with 0 
+reviews did not have overall_satisfaction set to NA, and >99.9% of these records 
+had overall_satisfaction set to 0. I changed the overall_satisfaction of these 
+records to NA.
 
 # Bivariate Plots Section
 
@@ -409,8 +450,8 @@ ggplot(airbnb, aes(y = price)) +
 ```{r}
 airbnb %>% 
   group_by(neighborhood) %>% 
-  summarise(n = n(), price = mean(price), med = median(price), min = min(price), max = max(price)) %>% 
-  arrange(desc(avg))
+  summarise(n = n(), mean = mean(price), med = median(price), min = min(price), max = max(price)) %>% 
+  arrange(desc(mean))
 ```
 
 
@@ -465,8 +506,6 @@ ggplot(airbnb, aes(y = price)) +
   scale_fill_manual(name = '', values =c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
                     labels = c('Price', 'Price per bedroom')) +
   labs(x = 'Neighborhood')
-
-
 
 ```
 
@@ -766,6 +805,112 @@ than the values for all_records, only being surpassed at the max value at the
 100th percentile.
 
 ```{r}
+ggplot(subset(airbnb, price < quantile(airbnb$price, 0.99)), aes(x = date_collected, y = price)) +
+  geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median')) +
+  ggtitle("price < 99th percentile", subtitle = "Top outliers removed.") + 
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months')
+```
+
+With the most extreme outliers removed, The August 2015 statistics are much less 
+drastic[rephrase].
+
+
+
+```{r}
+ggplot(airbnb, aes(y = overall_satisfaction)) +
+  geom_bar(stat = 'summary', fun.y = median,
+           aes(x = reorder(neighborhood, overall_satisfaction, 
+                           FUN = mean, na.rm = TRUE),
+               fill = I('deepskyblue'))) +
+    geom_bar(stat = 'summary', fun.y = mean, 
+             aes(x = neighborhood, fill = I('gray50'))) +
+  coord_flip() +
+  scale_fill_manual(name = 'overall_satisfaction', 
+                    values=c('gray50'='gray50', 'deepskyblue'='deepskyblue'),
+                    labels = c('Median', 'Mean')) +
+  labs(x = 'Neighborhood', y='')
+
+```
+```{r}
+#Keep this one visible
+subset(airbnb, neighborhood == 'Golden Gate Park')$overall_satisfaction %>% 
+  mean(na.rm = TRUE)
+
+subset(airbnb, neighborhood == 'Lakeshore')$overall_satisfaction %>% 
+  mean(na.rm = TRUE)
+```
+
+All of the neighborhoods have a median overall_satisfaction score of either 4.5 
+or 5. The mean score varies a little more, although all but two neighborhoods 
+score 4 or better.
+
+```{r}
+ggplot(subset(airbnb, price < quantile(airbnb$price, 0.99)), 
+       aes(y = price, x = overall_satisfaction)) +
+  geom_point(alpha = 1/100) +
+  scale_y_continuous(breaks = c(0,50,seq(100,1500,100))) +
+  labs(caption = 'Excluding top 1% prices')
+
+```
+
+```{r}
+ggplot(subset(airbnb), 
+       aes(x = overall_satisfaction, y = price)) +
+  geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median'))
+  
+```
+
+Based on the above we see quite some variation in [blahblah].
+
+Keep in mind that only 1.5% of the records have an overall_satisfaction score of 
+between 1 and 3.5, and 7.5% of the records have a score of 0. It is therefore 
+most interesting to look at the price differences in the 4 to 5 
+overall_satisfaction range, where there's a fairly clear trend: pricier units 
+receive better scores.
+
+```{r}
+ggplot(subset(airbnb, bedrooms < quantile(airbnb$bedrooms, 0.995, na.rm = TRUE)), 
+       aes(x = bedrooms, y = price)) +
+  geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median')) +
+  labs(caption = 'Excluding top 0.5% bedroom counts.')
+
+```
+
+```{r}
+ggplot(subset(airbnb), 
+       aes(x = accommodates, y = price)) +
+  geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median')) 
+
+```
+
+```{r}
+ggplot(subset(airbnb), 
+       aes(x = accommodates, y = bedrooms)) +
+  geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median')) 
+
+```
+
+```{r}
 #Move to later
 ggplot(subset(airbnb, aes(x = date_collected, y = overall_satisfaction)) +
   geom_line(stat = 'summary', fun.y = mean) + 
@@ -797,15 +942,26 @@ There is a fairly clear relationship between price and neighborhood. This makes
 sense, as some neighborhoods are more desirable than others. Based on local 
 knowledge about San Francisco, it seems like the [blabla].
 
+Except for some outlier price points in August 2015, the mean and median prices 
+did not vary much over the 4 year period. The prices at the last date of data 
+collections were actually lower than at most other dates.
+
+When it comes to overall_satisfaction, there's a fairly clear trend for the 
+higher scores: more expensive units receive a higher score.[rephrase?]
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
 
-[Follow up]
+There appear to be a relationship between neighborhood and overall satisfaction. 
+However, the correlation is not very strong, as all but 3 neighborhoods' mean 
+score fall within 0.6 points of eachother.
+
 
 ### What was the strongest relationship you found?
 
-[Follow up]
+The clearest relationship I found was price and number of bedrooms. 
+
+[Expand]
 
 # Multivariate Plots Section
 
