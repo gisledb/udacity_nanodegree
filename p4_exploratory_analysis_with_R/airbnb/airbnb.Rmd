@@ -642,11 +642,14 @@ some very high outlier prices. Let's investigate this further.
 
 ```{r}
 #Number of records per date
-airbnb %>% 
-  group_by(date_collected) %>% 
-  summarise(count = n()) %>% 
-  ggplot(aes(x = date_collected, y = count)) +
-  geom_line()
+# airbnb %>% 
+#   group_by(date_collected) %>% 
+#   summarise(count = n()) %>% 
+#   ggplot(aes(x = date_collected, y = count)) +
+#   geom_line()
+
+ggplot(airbnb, aes(x=date_collected)) + 
+  geom_line(stat= 'count')
 ```
 
 There is not an unusal number of records for any dates in 2015, so this is probably 
@@ -929,6 +932,28 @@ ggplot(subset(airbnb, overall_satisfaction > 0),
 ```
 
 
+```{r}
+#Making proportion table of room_type and date_collected
+mutated = airbnb %>%
+  group_by(date_collected, room_type) %>%
+  summarise (n = n()) %>%
+  mutate(Percentage = (n / sum(n)) * 100)
+
+plot = ggplot(mutated, aes(x=date_collected, fill = room_type, y = Percentage))
+  
+plot + 
+  geom_bar(stat = 'identity', position = 'jitter')
+
+```
+Due to the amount of dates, this is not very easy to read. Let's make a line 
+chart instead.
+
+```{r}
+plot + 
+  geom_line(aes(color='room_type'))
+```
+
+
 # Bivariate Analysis
 
 > **Tip**: As before, summarize what you found in your bivariate explorations
@@ -973,6 +998,19 @@ you plan on creating any mathematical models, this is the section where you
 will do that.
 
 ```{r echo=FALSE, Multivariate_Plots}
+ggplot(data = airbnb, aes(x = price)) + 
+  geom_histogram() + 
+  xlim(0,200) +
+  facet_wrap(~ room_type, nrow = 1)
+
+?facet_wrap
+
+#Adjusting for positive skew
+ggplot(data = diamonds, aes(x = price, fill = cut)) + 
+  geom_histogram() + 
+  facet_wrap(~ color) +
+  coord_trans(x = "log10") + 
+  xlim(100,20000)
 
 ```
 
