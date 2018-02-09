@@ -949,10 +949,14 @@ Due to the amount of dates, this is not very easy to read. Let's make a line
 chart instead.
 
 ```{r}
-plot + 
-  geom_line(aes(color='room_type'))
+
+ggplot(mutated, aes(x=date_collected, color = room_type, y = Percentage)) +
+  geom_line()
 ```
 
+With the line chart we see a clearer picture. The proportion of Entire home/apt 
+units have stayed fairly consistent throughout the time period, while private 
+room units have increased and shared room units have decreased.
 
 # Bivariate Analysis
 
@@ -1013,6 +1017,29 @@ ggplot(data = diamonds, aes(x = price, fill = cut)) +
   xlim(100,20000)
 
 ```
+
+```{r}
+mutated = filter(airbnb, room_type != '', 
+                 price <= quantile(airbnb$price, 0.99)) %>%
+  group_by(date_collected, room_type) %>%
+  summarise (n = n(), mean_price = mean(price), median_price = median(price))
+
+ggplot(mutated, aes(x=date_collected, color = room_type)) +
+  geom_line(aes(y = mean_price), linetype = 'solid') +
+  geom_line(aes(y = median_price), linetype = 'longdash', size = 0.5) +
+  labs(y = 'Price', caption = 'Excluding top 1% prices.') +
+  ggtitle('Prices per room type over time') +
+  theme(plot.caption = element_text(size = 8, hjust = 0), 
+        plot.title = element_text(size = 12))
+
+theme(axis.title.y=element_text(size=7))
+
+?theme
+
+?geom_line
+
+```
+
 
 # Multivariate Analysis
 
