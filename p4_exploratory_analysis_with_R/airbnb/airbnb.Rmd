@@ -857,9 +857,11 @@ score 4 or better.
 ```{r}
 ggplot(subset(airbnb, price < quantile(airbnb$price, 0.99)), 
        aes(y = price, x = overall_satisfaction)) +
-  geom_point(alpha = 1/100) +
-  scale_y_continuous(breaks = c(0,50,seq(100,1500,100))) +
-  labs(caption = 'Excluding top 1% prices')
+  geom_jitter(alpha = 1/10) + 
+  geom_smooth() +
+  scale_y_continuous(breaks = c(0,50,seq(100, 1500,100))) +
+  scale_x_continuous(breaks = seq(0,5,1)) +
+  labs(caption = "Excluding top 1% prices")
 
 ```
 
@@ -1068,6 +1070,9 @@ ggplot(data = filtered, aes(x = date_collected, y = price)) +
 
 Looking at the median values, it appears that most sizes [blahblah]
 
+```{r}
+
+```
 
 
 # Multivariate Analysis
