@@ -1113,10 +1113,43 @@ corrgram(airbnb, order=NULL, panel=panel.shade, text.panel=panel.txt,
 
 ```
 
+[unclear if keep or remove]
+
 ```{r}
 ggplot(aes(x=longitude, y=latitude), data=airbnb) +
     geom_point() 
+
 ```
+
+[map experiment, expand or remove]
+
+
+```{r fig.height = 8, fig.width = 7}
+
+ggplot(airbnb, aes(x = date_collected, y = price_per_bedroom)) +
+  geom_line(stat = 'summary', fun.y = median) +
+  theme_light() +
+  facet_wrap(~ neighborhood, ncol = 5)
+
+```
+
+```{r fig.height = 8, fig.width = 7}
+ggplot(airbnb, aes(x = date_collected)) +
+  geom_line(stat = 'summary', fun.y = median, 
+            aes(y = price, color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median, 
+            aes(y = price_per_bedroom, color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', 
+                     values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median')) + 
+  facet_wrap(~ neighborhood, ncol = 5)
+
+_?facet_wrap
+
+```
+
+
 
 # Multivariate Analysis
 
