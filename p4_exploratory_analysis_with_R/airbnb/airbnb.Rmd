@@ -1069,11 +1069,54 @@ ggplot(data = filtered, aes(x = date_collected, y = price)) +
 ```
 
 Looking at the median values, it appears that most sizes [blahblah]
-
 ```{r}
+ggplot(data = subset(airbnb, bedrooms <= 4), 
+       aes(x = accommodates, y = price,  color = as.character(bedrooms))) +
+  geom_smooth() +
+#  scale_y_log10() +
+  scale_color_brewer(type = 'div')
 
 ```
 
+
+```{r}
+ggplot(data = subset(airbnb, bedrooms <= 4), 
+       aes(x = accommodates, y = price,  color = as.character(bedrooms))) +
+  geom_jitter() +
+  scale_y_log10() +
+  scale_color_brewer(type = 'div')
+
+```
+
+[probably remove the above]
+
+```{r}
+
+filtered = subset(airbnb, price <= quantile(airbnb$price, 0.90))
+
+ggplot(filtered, aes(x = as.character(date_collected), y = room_type))+
+  geom_raster(aes(fill = price_per_bedroom))+
+  labs(title ="Heat Map", x = "Outlet Identifier", y = "Item Type")+
+#  scale_fill_continuous(name = "Item MRP") 
+scale_fill_gradientn(colors = colorRampPalette(c("cadetblue1", "cadetblue4"))(100)) 
+
+ ?scale_fill_gradientn(colors = colorRampPalette(c("cornsilk", "cornsilk3"))(100)) 
+```
+[remove the above]
+
+```{r}
+install.packages("corrgram")
+library(corrgram)
+
+corrgram(airbnb, order=NULL, panel=panel.shade, text.panel=panel.txt,
+           main="Correlogram")
+
+```
+
+```{r}
+ggplot(aes(x=longitude, y=latitude), data=airbnb) +
+    geom_point() 
+```
 
 # Multivariate Analysis
 
