@@ -920,7 +920,7 @@ ggplot(subset(airbnb),
 
 ```{r}
 #Move to later
-ggplot(subset(airbnb, aes(x = date_collected, y = overall_satisfaction)) +
+ggplot(airbnb, aes(x = date_collected, y = overall_satisfaction)) +
   geom_line(stat = 'summary', fun.y = mean) + 
   ylab('Median price')
 
@@ -1133,7 +1133,7 @@ ggplot(airbnb, aes(x = date_collected, y = price_per_bedroom)) +
 
 ```
 
-```{r fig.height = 8, fig.width = 7}
+```{r fig.height = 8, fig.width = 8}
 ggplot(airbnb, aes(x = date_collected)) +
   geom_line(stat = 'summary', fun.y = median, 
             aes(y = price, color = I('blue'))) +
@@ -1145,10 +1145,96 @@ ggplot(airbnb, aes(x = date_collected)) +
                     labels = c('Mean', 'Median')) + 
   facet_wrap(~ neighborhood, ncol = 5)
 
-_?facet_wrap
 
 ```
 
+Looking at this, Presidio stands out. While the median is fairly stable throughout the 
+time period[term], the mean price varies drastically. Let's take a closer look at 
+Presidio to figure out what is going on. 
+
+```{r}
+Presidio <- airbnb %>% 
+  subset(neighborhood == 'Presidio') %>% 
+  group_by(date_collected) %>% 
+  summarise(n = n(), mean = mean(price), median = median(price), min = min(price),
+            max = max(price), mean_bedrooms = mean(bedrooms) )
+
+Presidio
+
+```
+ 
+ Looking at the summary statistics, there seem to be a clear problem with drawing any 
+ conclusions from the Presidio data: the sample size per date is just too small, 
+ with most dates having less than 10 records [term] [phrasing]. Let's take a look 
+ at the sample sizes for all neighborhoods.
+
+```{r}
+neighborhood_count <-  
+  airbnb %>% 
+  group_by(neighborhood) %>% 
+  summarise(n = n()) %>% 
+  arrange(n)
+
+neighborhood_count
+```
+
+Presidio is clearly the most troublesome neighborhood in this regard, having 
+nearly 60% fewer records [term] than the second lowest neighborhood. However, 
+some of the other neightborhoods might also have too few records to be [statistically 
+viable]. Let's take a  closer look at the records with less than 1000 total records.
+
+
+```{r}
+
+filter_values <- filter(neighborhood_count, n <=1000)$neighborhood
+
+ggplot(filter(airbnb, neighborhood %in% filter_values), aes(x = date_collected)) +
+  geom_line(stat = 'count') +
+  theme_light() +
+  facet_wrap(~ neighborhood, ncol = 5)
+
+```
+ 
+ Too some extent all of these are troubling [expand].
+ 
+
+```{r fig.height = 8, fig.width = 8}
+ggplot(filter(airbnb, !(neighborhood %in% filter_values)), aes(x = date_collected)) +
+  geom_line(stat = 'summary', fun.y = median, 
+            aes(y = price, color = I('blue'))) +
+  geom_line(stat = 'summary', fun.y = median, 
+            aes(y = price_per_bedroom, color = I('forestgreen'))) +
+ theme_light() +
+  scale_color_manual(name = '', 
+                     values =c('blue'='blue', 'forestgreen'='forestgreen'), 
+                    labels = c('Mean', 'Median')) + 
+  facet_wrap(~ neighborhood, ncol = 5)
+
+
+```
+Excluding the low-record neighborhoods shows a clearer relationship between mean 
+and median for all neighborhoods. I also notice that except for the first date, 
+which we know has much less records compared to the other dates, the median 
+prices within neighborhoods stayed fairly stable throughout the time period. The 
+same is true for mean, except for Presidio Heights, which had some large outliers 
+on certain dates.[rephrase?]
+
+```{r}
+# set.seed(1234)
+# 
+# #Excluding identifiers
+# airbnb_subset <- airbnb[, c(3:ncol(airbnb))]
+# 
+# head(airbnb_subset)
+# 
+# ggpairs(airbnb_subset[sample.int(nrow(airbnb), 1000), ], 
+#          cardinality_threshold = nrow(distinct(airbnb,neighborhood)))
+# 
+# 
+# distinct(airbnb,neighborhood) %>% 
+#   nrow()
+
+```
 
 
 # Multivariate Analysis
@@ -1157,7 +1243,17 @@ _?facet_wrap
 investigation. Were there features that strengthened each other in terms of \
 looking at your feature(s) of interest?
 
+Neighborhood and price have a clear correlation, even after including time as a 
+variable. Both median and mean prices vary a fair amount from neighborhood to 
+neighborhood, and prices within neighborhoods stayed fairly stable throughout the 
+date range.
+
 ### Were there any interesting or surprising interactions between features?
+
+I found it interesting how a relatively large dataset can still be too small for 
+detailed analysis when you include multiple variables. The clearest example of this 
+was how I had to exclude certain neighborhoods from my analysis due to having too 
+few data points (less than 10) on certain dates.
 
 ### OPTIONAL: Did you create any models with your dataset? Discuss the \
 strengths and limitations of your model.
