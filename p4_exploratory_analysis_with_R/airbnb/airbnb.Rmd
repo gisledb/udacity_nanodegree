@@ -1219,20 +1219,18 @@ prices within neighborhoods stayed fairly stable throughout the time period. The
 same is true for mean, except for Presidio Heights, which had some large outliers 
 on certain dates.[rephrase?]
 
-```{r}
-# set.seed(1234)
-# 
-# #Excluding identifiers
-# airbnb_subset <- airbnb[, c(3:ncol(airbnb))]
-# 
-# head(airbnb_subset)
-# 
-# ggpairs(airbnb_subset[sample.int(nrow(airbnb), 1000), ], 
-#          cardinality_threshold = nrow(distinct(airbnb,neighborhood)))
-# 
-# 
-# distinct(airbnb,neighborhood) %>% 
-#   nrow()
+```{r fig.height = 12, fig.width = 12}
+set.seed(1234)
+
+#Excluding identifiers
+airbnb_subset <- airbnb[, c(3:ncol(airbnb))]
+
+airbnb_subset <- subset(airbnb_subset, select =-c(last_modified))
+
+plot <- ggpairs(airbnb_subset[sample.int(nrow(airbnb), 1000), ],
+         cardinality_threshold = nrow(distinct(airbnb,neighborhood)))
+
+plot
 
 ```
 
@@ -1272,7 +1270,7 @@ make sure you justify why you chose each plot by describing what it shows.
 
 ### Plot One
 ```{r echo=FALSE, Plot_One}
-
+1
 ```
 
 ### Description One
