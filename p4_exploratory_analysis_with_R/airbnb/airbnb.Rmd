@@ -224,7 +224,7 @@ grid.arrange(p1,p2,nrow = 1)
 
 ```
 []noe her[]
-
+{gisle}
 Next let's take a look at the price distribution.
 
 ```{r}
@@ -246,7 +246,7 @@ plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
 
 plot
 ```
-[something something]
+[something something]{gisle}
 
 
 
@@ -361,7 +361,7 @@ plot
 ```
 
 
-```{r}
+```{r} 
 #accommodates
 plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
   geom_bar()
@@ -369,6 +369,25 @@ plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
 
 plot
 ```
+
+(gisle)
+
+
+```{r}
+ggplot(filter(airbnb, price < quantile(airbnb$price,0.99)), aes(x = price)) +
+  geom_jitter(alpha = 1, stat = 'count')
+
+
+ggplot(airbnb, aes(x = price_bin)) +
+  geom_histogram(stat = 'count')
+
+?geom_point
+
+quantile(airbnb$price,0.75)
+
+```
+
+
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
 each code block and the end / start of your Markdown text so that it is
@@ -433,6 +452,22 @@ as well.
 In this section, among other things I want to take a closer look at the relationship 
 between price and neighborhood, and price and time.
 
+Before I go any further, I want to make sure the neighborhood data is correct. 
+Since the dataset contains latitude and longitude data, this is fairly easy to 
+check using a map plot.
+
+```{r fig.height=6, fig.width=6}
+ggmap(myMap) +
+geom_jitter(alpha = 0.01, aes(x=longitude, y=latitude), 
+           data= airbnb) +
+  facet_wrap(~neighborhood)
+
+```
+
+This is the result I was hoping for. The data points are nicely clustered within 
+their respective neighborhoods. Based on local knowledge I can confirm that the 
+names of the neighborhoods are correct.
+
 ```{r}
 ggplot(airbnb, aes(x = neighborhood, y = price)) +
   geom_bar(stat = 'summary', fun.y = mean) +
@@ -447,7 +482,7 @@ ggplot(airbnb, aes(y = price)) +
   coord_flip()
 
 ```
-
+(gisle)
 ```{r}
 airbnb %>% 
   group_by(neighborhood) %>% 
@@ -476,7 +511,7 @@ ggplot(airbnb, aes(y = price)) +
 
 
 ```
-
+(gisle)
 When we compare the price to price per bedroom, Presidio Heights is no longer 
 the most expensive neighborhoods. Now it seems like Downtown and the Financial 
 District has the most expensive units. One thing to note is that this plot excludes any units 
@@ -540,7 +575,7 @@ Indeed, no neightborhood has a higher median price than mean price.
 ```{r}
 #Creating table for neighborhood price
 
-neighborhood_price = airbnb %>%
+neighborhood_price <- airbnb %>%
   group_by(neighborhood) %>% 
   summarise(n = n(), mean = mean(price), median = median(price), 
             min = min(price), max = max(price)) %>% 
@@ -569,6 +604,8 @@ ggplot(neighborhood_price, aes(y = (mean / median), x = neighborhood)) +
   coord_flip() +
   theme_classic()
 
+?geom_b
+
 ?theme_bw()
 ```
 
@@ -576,7 +613,7 @@ In this plot, which compares median and mean price per neighborhood),
 we see that the median price in Presidio Heights is almost 2.5 times greater 
 than the mean price. It will be interesting to take a look at the effect of 
 room type in the multivariate section later in this [term]. I also want to plot 
-the prices per neighborhood in a scatter plot.
+the prices per neighborhood in a scatter plot. [huh]
 
 ```{r}
 #Price per bedroom vs price. Maybe remove
@@ -849,7 +886,7 @@ subset(airbnb, neighborhood == 'Golden Gate Park')$overall_satisfaction %>%
 subset(airbnb, neighborhood == 'Lakeshore')$overall_satisfaction %>% 
   mean(na.rm = TRUE)
 ```
-
+(gisle)
 All of the neighborhoods have a median overall_satisfaction score of either 4.5 
 or 5. The mean score varies a little more, although all but two neighborhoods 
 score 4 or better.
@@ -864,7 +901,7 @@ ggplot(subset(airbnb, price < quantile(airbnb$price, 0.99)),
   labs(caption = "Excluding top 1% prices")
 
 ```
-
+(gisle)
 ```{r}
 ggplot(subset(airbnb), 
        aes(x = overall_satisfaction, y = price)) +
@@ -961,7 +998,18 @@ ggplot(mutated, aes(x=date_collected, color = room_type, y = Percentage)) +
 
 With the line chart we see a clearer picture. The proportion of Entire home/apt 
 units have stayed fairly consistent throughout the time period, while private 
-room units have increased and shared room units have decreased.
+room units have increased and shared room units have decreased. I also notice 
+that a few dates at the end of 2015 and in the beginning of 2016 lacks room_type 
+information.
+
+```{r}
+airbnb %>% 
+  filter(room_type == '') %>% 
+  group_by(date_collected) %>% 
+  summarise(n = n())
+```
+
+
 
 # Bivariate Analysis
 
@@ -1069,6 +1117,9 @@ ggplot(data = filtered, aes(x = date_collected, y = price)) +
 ```
 
 Looking at the median values, it appears that most sizes [blahblah]
+
+
+
 ```{r}
 ggplot(data = subset(airbnb, bedrooms <= 4), 
        aes(x = accommodates, y = price,  color = as.character(bedrooms))) +
@@ -1105,7 +1156,7 @@ scale_fill_gradientn(colors = colorRampPalette(c("cadetblue1", "cadetblue4"))(10
 [remove the above]
 
 ```{r}
-install.packages("corrgram")
+# install.packages("corrgram")
 library(corrgram)
 
 corrgram(airbnb, order=NULL, panel=panel.shade, text.panel=panel.txt,
@@ -1121,7 +1172,62 @@ ggplot(aes(x=longitude, y=latitude), data=airbnb) +
 
 ```
 
-[map experiment, expand or remove]
+[map experiment, expand or remove] (gisle)
+
+```{r fig.height = 12, fig.width = 8}
+install.packages("ggmap", type = "source")
+library(ggmap)
+
+myLocation <- "San Francisco"
+
+myMap <- get_map(location = c(lon= -122.431297,lat = 37.773972), source = "google", 
+                 maptype = 'terrain', crop = FALSE, zoom = 12)
+
+sessionInfo()
+
+# ?get_openstreetmap
+# 
+# ?ggmap(myMap)
+# 
+# ?get_map
+# 
+# qmplot(data = airbnb, x=longitude, y=latitude)
+
+ggmap(myMap) +
+geom_jitter(alpha = 0.01, aes(x=longitude, y=latitude), 
+           data= filter(airbnb, !is.na(price_bin))) +
+  facet_wrap(~price_bin)
+  
+
+ggmap(myMap) +
+geom_point(alpha = 0.01, aes(x=longitude, y=latitude, color = price_bin), data=airbnb) +
+  facet_wrap(~date_collected)
+
+
+# map <- get_map(location = "texas", zoom = 6, source = "stamen", urlonly = TRUE)
+# 
+# map <- get_map(location=c(lon = -98.35, lat = 39.50), zoom = 8, source="google",maptype="roadmap",crop=FALSE)
+```
+
+Some dates appear to [use better color schemes].
+
+```{r}
+neighborhood_price_multi <- airbnb %>%
+  group_by(neighborhood, room_type) %>% 
+  summarise(n = n(), mean = mean(price), median = median(price), 
+            min = min(price), max = max(price)) %>% 
+  arrange(desc(mean))
+
+ggplot(filter(neighborhood_price_multi, room_type != ''), aes(y = median, x = neighborhood) ) +
+  geom_point(aes(x = reorder(neighborhood, median)) ) +
+  geom_bar(stat = 'identity', width = 0.1, aes(fill = I('gray50'))) +
+  ylab('Median price ratio of mean') +
+  coord_flip() +
+  theme_classic() +
+  facet_wrap(~room_type)
+```
+
+We see here that room type seems to affect the median price more than [blah].
 
 
 ```{r fig.height = 8, fig.width = 7}
@@ -1153,7 +1259,8 @@ time period[term], the mean price varies drastically. Let's take a closer look a
 Presidio to figure out what is going on. 
 
 ```{r}
-Presidio <- airbnb %>% 
+Presidio <-
+  airbnb %>% 
   subset(neighborhood == 'Presidio') %>% 
   group_by(date_collected) %>% 
   summarise(n = n(), mean = mean(price), median = median(price), min = min(price),
@@ -1167,6 +1274,14 @@ Presidio
  conclusions from the Presidio data: the sample size per date is just too small, 
  with most dates having less than 10 records [term] [phrasing]. Let's take a look 
  at the sample sizes for all neighborhoods.
+```{r}
+
+airbnb %>% subset(neighborhood == 'Presidio') %>% 
+  group_by(date_collected) %>% 
+  summarise(n = n(), mean = mean(price), median = median(price), min = min(price),
+            max = max(price), mean_bedrooms = mean(bedrooms) )
+
+```
 
 ```{r}
 neighborhood_count <-  
@@ -1219,28 +1334,92 @@ prices within neighborhoods stayed fairly stable throughout the time period. The
 same is true for mean, except for Presidio Heights, which had some large outliers 
 on certain dates.[rephrase?]
 
-```{r fig.height = 12, fig.width = 12}
+
+```{r}
+
+#Creating price bins
+airbnb$price_bin <- percent_rank(airbnb$price) %>% 
+  cut(breaks = seq(0,1,0.25), labels = seq(0.25,1,0.25))
+```
+
+
+```{r fig.height = 6, fig.width = 6}
+
+ggmap(myMap) +
+geom_jitter(alpha = 0.01, aes(x=longitude, y=latitude), 
+           data= filter(airbnb, !is.na(price_bin))) +
+  facet_wrap(~price_bin)
+
+```
+
+It looks to me like the most affordable units are widely distrbuted throughout 
+all the neighborhoods, while the most expensive units can mostly be found in the 
+most central parts of the city. [save for later:]I interpret this to mean that 
+the neighborhoods (...).
+
+
+```{r}
+ggmap(myMap) +
+geom_point(alpha = 0.01, aes(x=longitude, y=latitude, color = price_bin), data=airbnb) +
+  facet_wrap(~date_collected)
+```
+
+
+```{r}
+# ggmap(myMap) +
+# geom_jitter(alpha = 0.01, aes(x=longitude, y=latitude), 
+#            data= filter(airbnb, !is.na(price_bin))) +
+#   facet_wrap(~cut(percent_rank(price), breaks = seq(0,1,0.1)))
+# 
+# cut(percent_rank(head(airbnb$price,100)), breaks = seq(0,1,0.1))
+```
+
+
+```{r }
+
+#fig.height = 12, fig.width = 12}
+
+library(GGally)
+
+paste(colnames(airbnb))
+
 set.seed(1234)
 
 #Excluding identifiers
 airbnb_subset <- airbnb[, c(3:ncol(airbnb))]
-
 airbnb_subset <- subset(airbnb_subset, select =-c(last_modified))
 
-plot <- ggpairs(airbnb_subset[sample.int(nrow(airbnb), 1000), ],
+#Picking columns to compare
+columns <- c('room_type', 'neighborhood', 'reviews', 'overall_satisfaction', 
+             'accommodates', 'bedrooms', 'price', 'minstay', 'date_collected', 
+             'price_per_bedroom')
+
+airbnb_subset <- airbnb[, columns]
+
+plot <- ggpairs(airbnb_subset[sample.int(nrow(airbnb), 10000), ],
          cardinality_threshold = nrow(distinct(airbnb,neighborhood)))
 
 plot
 
+?ggpairs
+
 ```
 
+```{r}
+
+columns <- c('room_type', 'neighborhood', 'reviews', 'overall_satisfaction', 
+             'accommodates', 'bedrooms', 'price', 'minstay', 'date_collected', 
+             'price_per_bedroom')
+
+?cor(airbnb[,c('price','bedrooms','minstay','reviews')])
+```
 
 # Multivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the \
 investigation. Were there features that strengthened each other in terms of \
-looking at your feature(s) of interest?
 
+looking at your feature(s) of interest?
 Neighborhood and price have a clear correlation, even after including time as a 
 variable. Both median and mean prices vary a fair amount from neighborhood to 
 neighborhood, and prices within neighborhoods stayed fairly stable throughout the 
@@ -1270,10 +1449,33 @@ make sure you justify why you chose each plot by describing what it shows.
 
 ### Plot One
 ```{r echo=FALSE, Plot_One}
-1
+head(airbnb)
 ```
 
 ### Description One
+
+
+```{r}
+c('cd'=10,'cs'=100,'sd'=1000) %>% 
+  Indometh
+
+head(airbnb,20) %>% 
+  mutate(rank = percent_rank(price)) %>% 
+  cut(breaks = seq(1,10,1))
+  
+  
+airbnb$price_bin <- percent_rank(airbnb$price) %>% 
+  cut(breaks = seq(0,1,0.25), labels = seq(0.25,1,0.25))
+
+  mutate(bin = if_else(rank > 0.5, 1, 2 ))
+
+length(seq(1,10,1))
+
+length(1:10)
+
+?if_else
+
+```
 
 
 ### Plot Two
