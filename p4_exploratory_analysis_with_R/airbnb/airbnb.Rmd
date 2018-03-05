@@ -79,16 +79,24 @@ Next I'll get some information about the data types.
 str(airbnb)
 ```
 
+ 
+
 ```{r Univariate_Plots}
 #Setting correct format for dates
 airbnb$date_collected <- as.Date(airbnb$date_collected)
+
 ```
 
 I now want to get some summary statistics for the different fields in the 
 dataframe. 
 
-```{r}
+```{r Univariate_Plots}
 summary(airbnb)
+```
+
+```{r Univariate Plots}
+#Removing column with all NA values
+airbnb <- subset(airbnb, select = -borough)
 ```
 
 I am already seeing some trends in the data. For example, based on the 1st 
@@ -98,11 +106,11 @@ listings have ratings below 4 of 5. Let's plot this to take a closer look.
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 
 
-plot = ggplot(airbnb, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
   geom_bar() +
   scale_x_continuous(breaks = seq(0,5,1)) +
   geom_text(stat='count',aes(
-    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+    label=scales::percent(..prop..),vjust=-0.5))
 
 plot
 
@@ -140,7 +148,7 @@ for these records.
 ```{r echo=FALSE, Univariate_Plots}
 data = filter(airbnb, reviews == 0 & !is.na(overall_satisfaction))
 
-plot = ggplot(data, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+plot <- ggplot(data, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
   geom_bar() +
   scale_x_continuous(breaks = seq(0,5,1)) +
   geom_text(stat='count',aes(
@@ -153,7 +161,7 @@ plot
 It looks like all 0 reviews records with a value in overall_satisfaction has it 
 set to 0. I'll run a filtered querry to make sure.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 airbnb %>% 
   filter(reviews == 0 & overall_satisfaction > 0)
 ```
@@ -188,7 +196,7 @@ pre_change - post_change
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 
-plot = ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+plot <- ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
   geom_bar() +
   scale_x_continuous(breaks = seq(0,5,1)) +
   geom_text(stat='count',aes(
@@ -258,7 +266,7 @@ grid.arrange(p1,p2,nrow = 1)
 Next let's take a look at the price distribution.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
-plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
   geom_bar()# +
 #  scale_x_continuous(breaks = seq(0,max(airbnb$price),1000))
 
@@ -276,7 +284,7 @@ The 98th price percentile is at 1000, and I'll use that as the price cutoff to
 zoom in on the data.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
-plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
   geom_histogram(binwidth = 10) +
   xlim(0,1000)
 
@@ -291,7 +299,7 @@ right-skewed, with most units being priced below 250.
 I suspect size of the units heavily affect price. Therefore I will make a new 
 column for price per bedroom.
 
-```{r}
+```{r Univariate Plots}
 # Creating the column
 airbnb$price_per_bedroom = airbnb$price / airbnb$bedrooms
 
@@ -303,13 +311,14 @@ airbnb %>%
   summarise(n = n(), avg_price = mean(price, na.rm = TRUE), 
             avg_bedroom_price = mean(price_per_bedroom, na.rm = TRUE))
 ```
+
 Price_per_bedroom percentiles:
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 quantile(airbnb$price_per_bedroom, probs = seq(0.95,1,0.01), na.rm = TRUE)
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
-plot = ggplot(airbnb, aes(x = price_per_bedroom, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = price_per_bedroom, fill = I('#099DD9') ) ) +
   geom_histogram(binwidth = 10) +
   scale_x_continuous(limits = c(0,550),breaks = seq(0,600,100))
 
@@ -319,23 +328,23 @@ plot
 Unsurprisingly, the trend is very similar for the price and price_per_bedroom 
 plots: the distribution is heavily right-skewed.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 #bedrooms
-plot = ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
   geom_bar() +
   scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1)) +
     geom_text(stat='count',aes(
-    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+    label= scales::percent(..prop..)), vjust=-0.5, hjust=0.4, size = 3.2)
 
-plot +
-  facet_wrap(~room_type)
+plot
 
 ```
 
-Almost two thirds of all units are 1 room rentals.
+Almost two thirds of all units are one-room rentals. Room type is probably a 
+factor here. I will revisit this in the bivariate plots section.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
-plot = ggplot(airbnb, aes(x = room_type, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = room_type, fill = I('#099DD9') ) ) +
   geom_bar()
 
 plot
@@ -347,11 +356,12 @@ on it will be interesting to see if this changes over time.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 #minstay
-plot = ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
   geom_bar()
 
 plot
 ```
+
 Minstay percentiles:
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 quantile(airbnb$minstay, probs = seq(0.95,1,0.01), na.rm = TRUE)
@@ -371,19 +381,9 @@ considering there are 7 days in a week, and (roughly) 30 days in a month. There
 is also a slight increase at 10 days (round number) and 14 days (2 weeks). 
 
 
-
-```{r}
-ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
-  geom_bar() +
-  scale_x_continuous(breaks = seq(0,5,1)) +
-  geom_text(stat='count',aes(
-    label=scales::percent(..count../sum(..count..)),vjust=-0.5))
-```
-
-
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 #accommodates
-plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
   geom_bar()
 #  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
 
@@ -391,46 +391,33 @@ plot
 ```
 ```{r}
 #accommodates
-plot = ggplot(airbnb, aes(x = neighborhood, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = reorder(neighborhood, neighborhood, FUN = length), fill = I('#099DD9') ) ) +
   geom_bar() + 
-  coord_flip() 
-#  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
+  coord_flip()
 
 plot
 ```
 
+The neighborhood distribution is very spread, with some very large and some very 
+small neighborhoods. Although it is outside the scope of this project, it would 
+be interesting to compare the neighborhood proportions in the airbnb dataset to 
+population and housing data from San Francisco. This could reveal whether being 
+an airbnb host is much more common in some neighborhoods compared to other 
+neighborhoods.
 
-```{r} 
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots} 
 #accommodates
-plot = ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
+plot <- ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
   geom_bar()
 #  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1))
 
 plot
 ```
+
+While it is most common for units to accomadate 2 people, accomadating 4 people 
+is also rather common. 
 
 (gisle)
-
-
-```{r}
-ggplot(filter(airbnb, price < quantile(airbnb$price,0.99)), aes(x = price)) +
-  geom_jitter(alpha = 1, stat = 'count')
-
-
-ggplot(airbnb, aes(x = price_bin)) +
-  geom_histogram(stat = 'count')
-
-?geom_point
-
-quantile(airbnb$price,0.75)
-
-```
-
-
-```{r}
-
-```
-
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
 each code block and the end / start of your Markdown text so that it is
@@ -445,9 +432,11 @@ reflect on and summarize what you've found. Use the questions below to help you
 gather your observations and add your own if you have other thoughts!
 
 ### What is the structure of your dataset?
-There are 205,532 listings in the dataset. The listings were collected at 28 
-different dates. between November 2013 and October 2017.
-
+There are 205,532 Airbnb listings in the dataset. The listings were collected 
+at 28 different dates between November 2013 and October 2017. Each record 
+consists of 6 numeric, 2 nominal, and 2 ID variables (room_id and host_id). 
+There are also 2 date columns and 2 columns with geographical location 
+(longitude and lattitude). 
 
 ### What is/are the main feature(s) of interest in your dataset?
 
@@ -466,22 +455,23 @@ size. Without taking unit size into account it is very hard to get a true price
 picture.
 
 ### Of the features you investigated, were there any unusual distributions? \
-It is a little surprising to me how large the portion of 1 bedroom apartments is. 
-More than half of the units on the market fit into this category. There's a chance 
-some of these records really inform about the number of rooms available, not 
-the actual amount of rooms in the unit. It will be interesting to later take a look at 
-the bedroom distribution across room type.
+It is a little surprising to me how large the portion of 1 bedroom apartments 
+is. More than half of the units on the market fit into this category. There's a 
+chance some of these records really inform about the number of rooms available, 
+not the actual amount of rooms in the unit. It will be interesting to later take
+ a look at the bedroom distribution across room type.
 
 ### Did you perform any operations on the data to tidy, adjust, or change the form \
 ### of the data? If so, why did you do this?
 Yes. I initially downloaded 28 separate files which I merged to one file using 
-the tidy function union. For full details about this process, see [].
+the tidy function union. For full details about this process, see [filename].
 
-In the file you are reading now I have changed the data type of the date_collected 
-column from factor to date, for easier handling later.[rephrase] During my 
-analysis I found a data error which I corrected: 15 900[check] records with 0 
-reviews did not have overall_satisfaction set to NA, and >99.9% of these records 
-had overall_satisfaction set to 0. I changed the overall_satisfaction of these 
+In the file you are reading now I have changed the data type of the 
+date_collected column from factor to date. I also removed one "dead" variable, 
+borough, as all the values were set to NA. During my analysis I found a data 
+error which I corrected: 15 945 records with 0 reviews did not have 
+overall_satisfaction set to NA, and >99.9% of these records had 
+overall_satisfaction set to 0. I changed the overall_satisfaction of these 
 records to NA.
 
 # Bivariate Plots Section
@@ -1024,7 +1014,7 @@ mutated = airbnb %>%
   summarise (n = n()) %>%
   mutate(Percentage = (n / sum(n)) * 100)
 
-plot = ggplot(mutated, aes(x=date_collected, fill = room_type, y = Percentage))
+plot <- ggplot(mutated, aes(x=date_collected, fill = room_type, y = Percentage))
   
 plot + 
   geom_bar(stat = 'identity', position = 'jitter')
@@ -1052,7 +1042,19 @@ airbnb %>%
   summarise(n = n())
 ```
 
+```{r}
+#bedrooms
+plot <- ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0,max(subset(airbnb,!is.na(bedrooms))$bedrooms),1)) +
+    geom_text(stat='count',aes(
+    label= scales::percent(..prop..)), vjust=-0.5, hjust=0.4, size = 3.2)
 
+plot +
+  ylim(0,75000) +
+  facet_wrap(~room_type)
+
+```
 
 # Bivariate Analysis
 
