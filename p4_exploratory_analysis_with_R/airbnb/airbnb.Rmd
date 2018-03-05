@@ -1,4 +1,4 @@
-TITLE by YOUR_NAME_HERE
+Airbnb Listing Analysis by Gisle Tveit Gaasemyr
 ========================================================
 
 > **Tip**: You will see quoted sections like this throughout the template to
@@ -10,7 +10,7 @@ good formatting techniques, including limiting your lines to 80 characters or
 less. If you're using RStudio, go into Preferences \> Code \> Display to set up
 a margin line to help you keep track of this guideline!
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+```{r echo=FALSE, message=FALSE, packages}
 # Load all of the packages that you end up using in your analysis in this code
 # chunk.
 
@@ -28,6 +28,8 @@ library(tidyr)
 library(dplyr)
 library(scales)
 library(gridExtra)
+library(ggmap)
+
 ```
 
 ```{r echo=FALSE, Load_the_Data}
@@ -35,14 +37,16 @@ library(gridExtra)
 airbnb = read.csv('data/airbnb_union.csv')
 ```
 
-> **Tip**: [{remove}] Before you create any plots, it is a good idea to provide a short
-introduction into the dataset that you are planning to explore. Replace this
+> **Tip**: [{remove}] Before you create any plots, it is a good idea to provide 
+a short introduction into the dataset that you are planning to explore. Replace this
 quoted text with that general information![{/remove}]
 
-The dataset I have chosen consists of airbnb data from San Francisco collected 
-at [{X}] different dates between [{Month}]2013 and July 2017. I originally 
-downloaded the datasets from [{URL}] as [{count}] individual files, which I then 
-combined into a single file. For more details on this, see [{filename}].
+The dataset I have chosen consists of airbnb listing data from San Francisco 
+collected at 28 different dates between November 2013 and July 2017. I originally 
+downloaded the datasets from 
+http://tomslee.net/airbnb-data-collection-get-the-data as individual files for 
+each date, which I then combined into a single file. For more details on this, 
+see union_script.R [add to repo].
 
 For details on the content of the columns, see 
 http://tomslee.net/airbnb-data-collection-get-the-data.
@@ -56,25 +60,26 @@ forget to add a comment after each plot or closely-related group of plots!
 There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
 
-I'll start my analysis by taking a look at some records to get an initial feel of the 
-dataset.
-```{r echo=FALSE, Univariate_Plots}
+I'll start my analysis by taking a look at some records to get an initial feel 
+of the dataset.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 #Getting an initital look at some rows
 head(airbnb)
 ```
 
-```{r echo=FALSE, Univariate_Plots}
-#Getting an initital look at some rows
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+#Getting an initital look at some rowsggmap(myMap) +
 tail(airbnb)
 ```
 
 Next I'll get some information about the data types.
 
-```{r echo=FALSE, Univariate_Plots}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 str(airbnb)
 ```
 
-```{r}
+```{r Univariate_Plots}
 #Setting correct format for dates
 airbnb$date_collected <- as.Date(airbnb$date_collected)
 ```
@@ -90,11 +95,10 @@ I am already seeing some trends in the data. For example, based on the 1st
 quartile and max value for overall_satisfication, I suspect that very few 
 listings have ratings below 4 of 5. Let's plot this to take a closer look.
 
-```{r echo=FALSE, Univariate_Plots}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 
-data = airbnb
 
-plot = ggplot(data, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
+plot = ggplot(airbnb, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
   geom_bar() +
   scale_x_continuous(breaks = seq(0,5,1)) +
   geom_text(stat='count',aes(
@@ -106,10 +110,10 @@ plot
 
 The plot confirms my suspicion: 81.9% of the ratings are 4 or higher, with more 
 than 50% of the ratings being 5. However, it is interesting to see that 16.8% of 
-the rooms have a rating of 0. Let's take a closer look at some summary statistics
-for these records to see if there's a data quality issue.
+the rooms have a rating of 0. Let's take a closer look at some summary 
+statistics for these records to see if there's a data quality issue.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 airbnb %>% 
   filter(overall_satisfaction==0) %>% 
   summary()
@@ -121,7 +125,9 @@ those visitors who left a review." We can therefore assume that records with 0
 reviews should have rating set to NA, not 0-5. Let's take a look at how many 
 records have 0 reviews and an overall_satisfaction between 0 and 5.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+
+#Count of records with 0 reviews and an overall_satisfaction between 0 and 5
 airbnb %>% 
   filter(reviews == 0 & !is.na(overall_satisfaction)) %>% 
   nrow()
@@ -157,7 +163,7 @@ column again excluding the 0 reviews records. I will also update the airbnb
 dataframe and change the overall_satisfaction score from 0 to NA for these 
 records.
 
-```{r}
+```{r include=FALSE, Univariate_Plots}
 #For QA
 pre_change <- airbnb %>% 
   group_by(overall_satisfaction) %>% 
@@ -180,7 +186,7 @@ pre_change - post_change
 ```
 
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 
 plot = ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
   geom_bar() +
@@ -195,15 +201,30 @@ overall ranking of 0 goes down to 7.5. That's still a fair amount, but it's much
 more believeable than before. Let's run a summary query on these records to see 
 if we can spot any trends.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 airbnb %>% 
   filter(overall_satisfaction==0, reviews != 0) %>% 
   summary()
 ```
 
 What stands out to me is that a large portion of these records have only one 
-review. Let's compare the distribution of the amount of reviews of these records 
-with the full sample[].
+review. Let's compare the amount of reviews of these records 
+with the full dataset.
+
+```{r}
+filter(airbnb, reviews != 0) %>% 
+  group_by(reviews) %>% 
+  summarise(n = n())
+
+20367 + 12907
+
+9857			+
+  8049			+
+  6292			+
+  5475			+
+  4837	
+```
+
 
 ```{r}
 
@@ -215,15 +236,22 @@ p1 = ggplot(filter(airbnb, overall_satisfaction == 0 & reviews != 0), aes(x = re
 
 p2 = ggplot(filter(airbnb, reviews != 0), aes(x = reviews, fill = I('#099DD9') ) ) +
   geom_histogram(binwidth = 5) +
-  xlim(0,200)
-# scale_x_continuous(limits = (0,200))
-  #geom_text(stat='count',aes(
-  #  label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+#   stat_bin(binwidth= 5, geom="text", aes(label = ..count.., y = 0.98*(..count..)) , 
+# vjust = -1) +
+  geom_text(stat='bin', binwidth=aes(
+    label=scales::percent(..count../sum(..count..)),vjust=-0.5)) +
+  xlim(0,50) 
+  # geom_text(stat='count',aes(
+  #   label=scales::percent(..count../sum(..count..)),vjust=-0.5))
+
+p2
 
 grid.arrange(p1,p2,nrow = 1)
 
+?stat_bin
+
 ```
-[]noe her[]
+[]noe her, fiks plot.[]
 {gisle}
 Next let's take a look at the price distribution.
 
@@ -248,7 +276,8 @@ plot
 ```
 [something something]{gisle}
 
-
+Setting the max price to 1000 gives a clearer picture of the price distribution. 
+The plot is heavily right-skewed, with most prices being below 250.
 
 ```{r}
 quantile(airbnb$price, probs = seq(0,1,0.01)) %>% 
@@ -387,6 +416,10 @@ quantile(airbnb$price,0.75)
 
 ```
 
+
+```{r}
+
+```
 
 
 > **Tip**: Make sure that you leave a blank line between the start / end of
@@ -1166,11 +1199,7 @@ corrgram(airbnb, order=NULL, panel=panel.shade, text.panel=panel.txt,
 
 [unclear if keep or remove]
 
-```{r}
-ggplot(aes(x=longitude, y=latitude), data=airbnb) +
-    geom_point() 
 
-```
 
 [map experiment, expand or remove] (gisle)
 
@@ -1343,10 +1372,16 @@ airbnb$price_bin <- percent_rank(airbnb$price) %>%
 ```
 
 
+```{r}
+ggmap(myMap) +
+    geom_jitter(size = 0.1, alpha = 0.01, aes(x=longitude, y=latitude), data=airbnb)
+
+```
+
 ```{r fig.height = 6, fig.width = 6}
 
 ggmap(myMap) +
-geom_jitter(alpha = 0.01, aes(x=longitude, y=latitude), 
+geom_jitter(alpha = 0.01, size = 1, aes(x=longitude, y=latitude), 
            data= filter(airbnb, !is.na(price_bin))) +
   facet_wrap(~price_bin)
 
@@ -1364,6 +1399,23 @@ geom_point(alpha = 0.01, aes(x=longitude, y=latitude, color = price_bin), data=a
   facet_wrap(~date_collected)
 ```
 
+```{r}
+airbnb$price_bin_custom <- 
+  airbnb$price %>% 
+cut(breaks = c(0,100,200,300,400,500,1000,10000,max(airbnb$price)))
+
+ggplot(airbnb, aes(x = price_bin_custom)) +
+  geom_bar()
+```
+
+```{r fig.height = 8, fig.width = 6}
+
+ggmap(myMap) +
+geom_jitter(alpha = 0.01, size = 1, aes(x=longitude, y=latitude), 
+           data= filter(airbnb, !is.na(price_bin_custom))) +
+  facet_wrap(~price_bin_custom)
+
+```
 
 ```{r}
 # ggmap(myMap) +
