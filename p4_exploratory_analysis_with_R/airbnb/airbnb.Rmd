@@ -212,6 +212,8 @@ review. Let's compare the amount of reviews of these records
 with the full dataset.
 
 ```{r}
+
+#to be used or removed
 filter(airbnb, reviews != 0) %>% 
   group_by(reviews) %>% 
   summarise(n = n())
@@ -255,7 +257,7 @@ grid.arrange(p1,p2,nrow = 1)
 {gisle}
 Next let's take a look at the price distribution.
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
   geom_bar()# +
 #  scale_x_continuous(breaks = seq(0,max(airbnb$price),1000))
@@ -266,31 +268,34 @@ plot
 Looks like there's some extreme outliers for the price variable. Let's zoom in 
 to get a better sense of price distribution
 
-```{r}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+quantile(airbnb$price, probs = seq(0.95,1,0.01))
+```
+
+The 98th price percentile is at 1000, and I'll use that as the price cutoff to 
+zoom in on the data.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
 plot = ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
   geom_histogram(binwidth = 10) +
   xlim(0,1000)
-#  scale_x_continuous(breaks = seq(0,max(airbnb$price),1000))
 
 plot
 ```
-[something something]{gisle}
+{gisle}
 
-Setting the max price to 1000 gives a clearer picture of the price distribution. 
-The plot is heavily right-skewed, with most prices being below 250.
+Setting the max price to 1000, which excludes the 2% most expensive units,
+gives a clearer picture of the price distribution. The plot is heavily 
+right-skewed, with most units being priced below 250.
 
-```{r}
-quantile(airbnb$price, probs = seq(0,1,0.01)) %>% 
-  grid.table()
-```
-
-I suspect size of the units heavily affect price. Therefore I will make a couple 
-extra variables to look at the prices at the same room levels[].
+I suspect size of the units heavily affect price. Therefore I will make a new 
+column for price per bedroom.
 
 ```{r}
+# Creating the column
 airbnb$price_per_bedroom = airbnb$price / airbnb$bedrooms
 
-#Removing infinite values
+# Removing infinite values
 is.na(airbnb$price_per_bedroom) <- do.call(cbind,lapply(airbnb$price_per_bedroom, is.infinite))
 
 airbnb %>% 
@@ -298,57 +303,21 @@ airbnb %>%
   summarise(n = n(), avg_price = mean(price, na.rm = TRUE), 
             avg_bedroom_price = mean(price_per_bedroom, na.rm = TRUE))
 ```
-
-
-```{r}
-airbnb$room_type
-
-airbnb %>% 
-  group_by(room_type) %>% 
-  summarise(n = n(), min_rooms = min(bedrooms, na.rm = TRUE), 
-            max_rooms = max(bedrooms, na.rm = TRUE))
-
-?summarise
-
-max(airbnb$bedrooms, na.rm = TRUE)
+Price_per_bedroom percentiles:
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+quantile(airbnb$price_per_bedroom, probs = seq(0.95,1,0.01), na.rm = TRUE)
 ```
 
-```{r}
-length((airbnb$date_collected))
-min((airbnb$date_collected))
-max((airbnb$date_collected))
-
-?grid.table
-
-```
-
-
-```{r}
-#minstay
-plot = ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
-  geom_bar()
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+plot = ggplot(airbnb, aes(x = price_per_bedroom, fill = I('#099DD9') ) ) +
+  geom_histogram(binwidth = 10) +
+  scale_x_continuous(limits = c(0,550),breaks = seq(0,600,100))
 
 plot
 ```
-```{r}
-#zooming in on <100 days
-plot = ggplot(subset(airbnb, minstay <=100), aes(x = minstay, fill = I('#099DD9') ) ) +
-  geom_bar() + 
-  scale_x_continuous(breaks = seq(0,100,10))
 
-plot
-```
-```{r}
-#zooming in on <10 days
-plot = ggplot(subset(airbnb, minstay <=10), aes(x = minstay, fill = I('#099DD9') ) ) +
-  geom_bar() + 
-  scale_x_continuous(breaks = seq(0,10,1))
-
-plot
-```
-The majority of listings have 1-3 days set as the minimum length of time for renting their unit. Almost no hosts asks for a longer
-minimum stay than 7 days, although there is a small spike at 30 days, indicating that some units are 
-listed as monthly rentals.
+Unsurprisingly, the trend is very similar for the price and price_per_bedroom 
+plots: the distribution is heavily right-skewed.
 
 ```{r}
 #bedrooms
@@ -358,9 +327,50 @@ plot = ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
     geom_text(stat='count',aes(
     label=scales::percent(..count../sum(..count..)),vjust=-0.5))
 
+plot +
+  facet_wrap(~room_type)
+
+```
+
+Almost two thirds of all units are 1 room rentals.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+plot = ggplot(airbnb, aes(x = room_type, fill = I('#099DD9') ) ) +
+  geom_bar()
+
 plot
 
 ```
+
+Almost all units have either room_type Entire home/apt and Private room. Later 
+on it will be interesting to see if this changes over time.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+#minstay
+plot = ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
+  geom_bar()
+
+plot
+```
+Minstay percentiles:
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+quantile(airbnb$minstay, probs = seq(0.95,1,0.01), na.rm = TRUE)
+
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots}
+#minstay excluding units with 2% highest minstay values.
+plot +
+  scale_x_continuous(limits = c(0,31), breaks = seq(0,31,1))
+```
+
+It looks like most Airbnb hosts require a minimum stay between 1 and 3 nights, 
+with few units requiring more than 7 nights. It is interesting to see that many 
+more units have a minimum stay of 7 and 30 nights than 6 nights, which is natural 
+considering there are 7 days in a week, and (roughly) 30 days in a month. There 
+is also a slight increase at 10 days (round number) and 14 days (2 weeks). 
+
+
 
 ```{r}
 ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
