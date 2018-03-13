@@ -1,7 +1,7 @@
 **Primary Data Source**  
 http://tomslee.net/airbnb-data-collection-get-the-data (the San Francisco section)  
 
-**Other resources**
+**Other resources** 
 https://cran.r-project.org/web/packages/ggthemes/vignettes/ggthemes.html
 http://adv-r.had.co.nz/Style.html
 https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf
