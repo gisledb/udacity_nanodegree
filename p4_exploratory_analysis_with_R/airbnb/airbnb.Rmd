@@ -1,3 +1,4 @@
+
 Airbnb Listing Analysis by Gisle Tveit Gaasemyr
 ========================================================
 
@@ -29,7 +30,7 @@ library(reshape2)
 airbnb = read.csv('data/airbnb_union.csv')
 ```
 
-
+  
 The dataset I have chosen consists of airbnb listing data from San Francisco 
 collected at 28 different dates between November 2013 and July 2017. I originally 
 downloaded the datasets from 
@@ -39,55 +40,57 @@ see union_script.R in the p6 folder.
 
 For details on the content of the columns, see 
 http://tomslee.net/airbnb-data-collection-get-the-data.
-
-
+  
+  
 # Univariate Plots Section
-
-
+  
 I will start my analysis by taking a look at some records, to get an initial 
 feel of the dataset.
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots01}
 #Getting an initital look at some rows
 head(airbnb)
 ```
-
+   
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots02}
 #Getting an initital look at some rows
 tail(airbnb)
 ```
-
-
+\
+\
 Next I'll get some information about the data types.
-
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots03}
 str(airbnb)
 ```
-
+   
 ```{r warning=FALSE, Univariate_Plots04}
 #Setting correct format for dates
 airbnb$date_collected <- as.Date(airbnb$date_collected)
 
 ```
-
-
+\
+\
 I now want to get some summary statistics for the different fields in the 
 dataframe. 
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots05}
 summary(airbnb)
 ```
-
+ 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots06}
 #Removing column with all NA values
 airbnb <- subset(airbnb, select = -borough)
 ```
-
+\
+\
 I am already seeing some trends in the data. For example, based on the 1st 
 quartile and max value for overall_satisfication, I suspect that very few 
 listings have ratings below 4 of 5. Let's plot this to take a closer look.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots07}
 
 plot <- ggplot(airbnb, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
@@ -98,26 +101,29 @@ plot <- ggplot(airbnb, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
 
 plot
 ```
-
+\
+\
 The plot confirms my suspicion: 81.9% of the ratings are 4 or higher, with more 
 than 50% of the ratings being 5. However, it is interesting to see that 16.8% of 
 the rooms have a rating of 0. Let's take a closer look at some summary 
 statistics for these records to see if there's a data quality issue.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots08}
 airbnb %>% 
   filter(overall_satisfaction==0) %>% 
   summary()
 ```
+\
+\
 The first thing I notice is that there seem to be a large amount of records 
 with 0 reviews. According to the dataset description the overall_satisfaction 
 consists of "The average rating (out of five) that the listing has received from 
 those visitors who left a review." We can therefore assume that records with 0 
 reviews should have rating set to NA, not 0-5. Let's take a look at how many 
 records have 0 reviews and an overall_satisfaction between 0 and 5.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots09}
 
 #Count of records with 0 reviews and an overall_satisfaction between 0 and 5
@@ -126,11 +132,11 @@ airbnb %>%
   nrow()
 
 ```
-
+  
 About 8% of the records match this criteria. Let's plot the overall_satisfaction 
 for these records.
-
-
+\
+\
 ```{r echo=FALSE, Univariate_Plots10}
 data = filter(airbnb, reviews == 0 & !is.na(overall_satisfaction))
 
@@ -143,22 +149,24 @@ plot <- ggplot(data, aes(x = overall_satisfaction, fill = I('#099DD9') ) ) +
 plot
 
 ```
-
+\
+\
 It looks like all 0 reviews records with a value in overall_satisfaction has it 
 set to 0. I'll run a filtered querry to make sure.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots11}
 airbnb %>% 
   filter(reviews == 0 & overall_satisfaction > 0)
 ```
-
+\
+\
 3 out of 205k records is practically 0. I will now plot the overall_satisfaction 
 column again excluding the 0 reviews records. I will also update the airbnb 
 dataframe and change the overall_satisfaction score from 0 to NA for these 
 records.
-
-
+\
+\
 ```{r include=FALSE, Univariate_Plots12}
 #For QA
 pre_change <- airbnb %>% 
@@ -191,24 +199,26 @@ plot <- ggplot(filter(airbnb, reviews != 0), aes(x = overall_satisfaction, fill 
 
 plot
 ```
-
+\
+\
 When excluding the zero reviews records, the percentage of records with an 
 overall ranking of 0 goes down to 7.5. That's still a fair amount, but it's much 
 more believeable than before. Let's run a summary query on these records to see 
 if we can spot any trends.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots14}
 airbnb %>% 
   filter(overall_satisfaction==0, reviews != 0) %>% 
   summary()
 ```
-
+\
+\
 What stands out to me is that a large portion of these records have only one 
 review. Let's compare the amount of reviews of these records 
 with the full dataset.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots15}
 
 p1 = ggplot(filter(airbnb, overall_satisfaction == 0 & reviews != 0), aes(x = reviews, fill = I('#099DD9') ) ) +
@@ -225,47 +235,54 @@ p2 = ggplot(filter(airbnb, reviews != 0), aes(x = reviews, fill = I('#099DD9') )
 grid.arrange(p1,p2,nrow = 1)
 
 ```
-
+\
+\
 Almost all the listings with overall_satisfaction score 0 have either 1 or 2 
 reviews.
 Next let's take a look at the price distribution.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots16}
 plot <- ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
-  geom_bar()# +
+  geom_bar() +
+  xlab('Price ($)')
 #  scale_x_continuous(breaks = seq(0,max(airbnb$price),1000))
 
 plot
 ```
-
+\
+\
 Looks like there's some extreme outliers for the price variable. Let's zoom in 
 to get a better sense of price distribution
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots17}
 quantile(airbnb$price, probs = seq(0.95,1,0.01))
 ```
-
+\
+\
 The 98th price percentile is at 1000, and I'll use that as the price cutoff to 
 zoom in on the data.
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots18}
 plot <- ggplot(airbnb, aes(x = price, fill = I('#099DD9') ) ) +
   geom_histogram(binwidth = 10) +
-  xlim(0,1000)
+  xlim(0,1000) +
+  xlab('Price ($)')
 
 plot
 ```
-
+\
+\
 Setting the max price to 1000, which excludes the 2% most expensive units,
 gives a clearer picture of the price distribution. The plot is heavily 
 right-skewed, with most units being priced below 250.
 
 I suspect size of the units heavily affect price. Therefore I will make a new 
 column for price per bedroom.
-
-
+\
+\
 ```{r Univariate Plots}
 # Creating the column
 airbnb$price_per_bedroom = airbnb$price / airbnb$bedrooms
@@ -278,25 +295,28 @@ airbnb %>%
   summarise(n = n(), avg_price = mean(price, na.rm = TRUE), 
             avg_bedroom_price = mean(price_per_bedroom, na.rm = TRUE))
 ```
-
-
+\
+\
 Price_per_bedroom percentiles:
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots19}
 quantile(airbnb$price_per_bedroom, probs = seq(0.95,1,0.01), na.rm = TRUE)
 ```
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots20}
 plot <- ggplot(airbnb, aes(x = price_per_bedroom, fill = I('#099DD9') ) ) +
   geom_histogram(binwidth = 10) +
-  scale_x_continuous(limits = c(0,550),breaks = seq(0,600,100))
+  scale_x_continuous(limits = c(0,550),breaks = seq(0,600,100)) +
+  xlab('Price per bedroom ($)')
 
 plot
 ```
-
+\
+\
 Unsurprisingly, the trend is very similar for the price and price_per_bedroom 
 plots: the distribution is heavily right-skewed.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots21}
 #bedrooms
 plot <- ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
@@ -309,11 +329,12 @@ plot <- ggplot(airbnb, aes(x = bedrooms, fill = I('#099DD9') ) ) +
 plot
 
 ```
-
+\
+\
 Almost two thirds of all units are one-room rentals. Room type is probably a 
 factor here. I will revisit this in the bivariate plots section.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots22}
 plot <- ggplot(airbnb, aes(x = room_type, fill = I('#099DD9') ) ) +
   geom_bar()
@@ -321,11 +342,12 @@ plot <- ggplot(airbnb, aes(x = room_type, fill = I('#099DD9') ) ) +
 plot
 
 ```
-
+\
+\
 Almost all units have either room_type Entire home/apt and Private room. Later 
 on it will be interesting to see if this changes over time.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots23}
 #minstay
 plot <- ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
@@ -333,27 +355,29 @@ plot <- ggplot(airbnb, aes(x = minstay, fill = I('#099DD9') ) ) +
 
 plot
 ```
-
+\
+\
 Minstay percentiles:
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots24}
 quantile(airbnb$minstay, probs = seq(0.95,1,0.01), na.rm = TRUE)
 
 ```
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots25}
 #minstay excluding units with 2% highest minstay values.
 plot +
   scale_x_continuous(limits = c(0,31), breaks = seq(0,31,1))
 ```
-
+\
+\
 It looks like most Airbnb hosts require a minimum stay between 1 and 3 nights, 
 with few units requiring more than 7 nights. It is interesting to see that many 
 more units have a minimum stay of 7 and 30 nights than 6 nights, which is 
 natural considering there are 7 days in a week, and (roughly) 30 days in a month. 
 There is also a slight increase at 10 days (round number) and 14 days (2 weeks). 
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots26}
 #accommodates
 plot <- ggplot(airbnb, aes(x = reorder(neighborhood, 
@@ -364,15 +388,16 @@ plot <- ggplot(airbnb, aes(x = reorder(neighborhood,
 
 plot
 ```
-
+\
+\
 The neighborhood distribution is very spread, with some very large and some very 
 small neighborhoods. Although it is outside the scope of this project, it would 
 be interesting to compare the neighborhood proportions in the airbnb dataset to 
 population and housing data from San Francisco. This could reveal whether being 
 an airbnb host is much more common in some neighborhoods compared to other 
 neighborhoods.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Univariate_Plots27} 
 #accommodates
 plot <- ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
@@ -380,11 +405,12 @@ plot <- ggplot(airbnb, aes(x = accommodates, fill = I('#099DD9') ) ) +
 
 plot
 ```
-
+\
+\
 While it is most common for units to accommodate 2 people, accommodating 4 people 
 is also rather common. Few listings accommodate more than 
 6 people.
-
+\
 
 # Univariate Analysis
 
@@ -396,7 +422,6 @@ There are also 2 date columns and 2 columns with geographical location
 (longitude and lattitude). 
 
 ### What is/are the main feature(s) of interest in your dataset?
-
 From my initial analysis I consider price and date to be the main features of 
 interest in the data set. 
 
@@ -441,8 +466,8 @@ relationship between price and neighborhood, and price and time.
 Before I go any further, I want to make sure the neighborhood data is correct. 
 Since the dataset contains latitude and longitude data, this is fairly easy to 
 check using a map plot.
-
-
+\
+\
 ```{r fig.height=6, fig.width=6, echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots01}
 
 #Fetching map of San Francisco
@@ -452,23 +477,33 @@ myMap <- get_map(location = c(lon= -122.431297,lat = 37.773972),
 ggmap(myMap) +
 geom_jitter(alpha = 0.01, aes(x=longitude, y=latitude), 
            data= airbnb) +
-  facet_wrap(~neighborhood)
+  facet_wrap(~neighborhood) +
+  scale_x_continuous(limits = c(-122.525, -122.3), 
+                     expand = c(0, 0), breaks = NULL) +
+  scale_y_continuous(limits = c(37.695, 37.84), 
+                     expand = c(0, 0), breaks = NULL) +
+  theme(axis.title = element_blank()) +
+  ggtitle("Distribution of neighborhood variable")
 
   
 ```
-
+\
+\
 This is the result I was hoping for. The data points are nicely clustered within 
 their respective neighborhoods. Based on local knowledge I can confirm that the 
 names of the neighborhoods are correct.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots02}
 
-  ggplot(airbnb, aes(y = price)) +
+plot <- ggplot(airbnb, aes(y = price)) +
   geom_bar(stat = 'summary', fun.y = mean, 
            aes(x = reorder(neighborhood, price))) +
-  coord_flip()
+  coord_flip() +
+  labs(x = '', y = 'Mean price ($)')
+  
 
+plot
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots03}
@@ -478,14 +513,15 @@ airbnb %>%
             min = min(price), max = max(price)) %>% 
   arrange(desc(mean))
 ```
-
+\
+\
 Presidio Heights and Presidio are clearly the most expensive neighborhoods, 
 with an average price per night above $440. The most affordable neighborhods are 
 Treasure Island, Crocker Amazon and Lakeshore. This makes sense, as they are all 
 on the outskirts of the San Francisco city limits. Based on my local knowledge of 
 the city there are no surprises in this figure.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots04}
 
 plot <- ggplot(airbnb, aes(y = price)) +
@@ -494,7 +530,8 @@ plot <- ggplot(airbnb, aes(y = price)) +
   geom_bar(stat = 'summary', fun.y = mean, 
            aes(x = reorder(neighborhood, price),
                y = price_per_bedroom, fill = I('deepskyblue'))) +
-  coord_flip()
+  coord_flip() +
+  labs(x = '', y = '$')
 
 legend <- scale_fill_manual(name = 'Variable', values = 
                       c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
@@ -506,14 +543,15 @@ plot + legend
 
 ?guides
 ```
-
+\
+\
 When we compare the price to price per bedroom, Presidio Heights is no longer 
 the most expensive neighborhoods. Now it seems like Downtown and the Financial 
 District has the most expensive units. One thing to note is that this plot 
 excludes any units with zero bedrooms  (roughly 13% of the records). Let's see 
 if looking at median instead of mean changes things.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots05}
 
 plot <- ggplot(airbnb, aes(y = price)) +
@@ -524,12 +562,13 @@ plot <- ggplot(airbnb, aes(y = price)) +
            aes(x = reorder(neighborhood, price,  FUN = median),
                y = price_per_bedroom, fill = I('deepskyblue'))) +
   coord_flip() +
-  labs(x = 'Neighborhood')
+  labs(x = 'Neighborhood', y = '$')
 
 plot + legend
 
 ```
-
+\
+\
 Looking at median instead of mean, the situation changes quite a bit. 
 For absolute price, Presidio Heights and Presidio drop to 4th and 5th places, 
 while Marina, Pacific Heights and Russian Hill now occupy the top 3. Presidio 
@@ -541,8 +580,8 @@ very expensive units, increasing the mean values. Especially Presidio and
 Presidio Heights seems to be affected by this. It doesn't seem to be same case 
 the other way around, as all neighborhoods seem to have a higher mean than 
 median price. Lets create another plot to confirm this.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots06}
 plot <- ggplot(airbnb, aes(y = price)) +
   geom_bar(stat = 'summary', fun.y = mean, 
@@ -552,7 +591,7 @@ plot <- ggplot(airbnb, aes(y = price)) +
            aes(x = reorder(neighborhood, price),
                fill = I('deepskyblue'))) +
   coord_flip() +
-  labs(x = 'Neighborhood')
+  labs(x = 'Neighborhood', y = '$')
 
 legend <- scale_fill_manual(name = 'Statistic', values = 
                       c('gray50'='gray50', 'deepskyblue'='deepskyblue'), 
@@ -562,10 +601,11 @@ legend <- scale_fill_manual(name = 'Statistic', values =
 
 plot +legend
 ```
-
+\
+\
 As expected, no neighborhood has a higher median price than mean price. 
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots07}
 #Creating table for neighborhood price
 
@@ -578,86 +618,100 @@ neighborhood_price <- airbnb %>%
 plot <- ggplot(neighborhood_price, aes(y = (mean / median), 
                                        x = reorder(neighborhood, 
                                                    (mean / median) ) )) +
-  geom_bar(stat = 'identity') + 
-  coord_flip()
+  geom_point(aes(x = reorder(neighborhood, (mean / median), FUN = 'identity')), size = 1) +
+  geom_bar(stat = 'identity', width = 0.1, aes(fill = I('gray50'))) +   
+  coord_flip() +
+  theme_classic()
+
   
 plot
 ```
-
+\
+\
 In this plot, which compares median and mean price per neighborhood, 
 we see that the median price in Presidio Heights is almost 2.5 times greater 
 than the mean price. From the univariate plot section I already know that the 
 dataset has some large price outliers. A box plot might reveal whether the 
 outliers are distributed across most or only a few neighborhoods.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots08}
 
 #Horizontal box plot, price and neighborhood
 plot <- ggplot(airbnb, aes(y = price, x = reorder(neighborhood,price, FUN = mean))) +
   geom_boxplot(outlier.size = 0.5, outlier.alpha = 0.3) + 
-  coord_flip()
+  coord_flip() +
+  labs(x = 'Neighborhood', y = 'Price ($)') +
+  ggtitle('Boxplot, price per neighborhood')
 
 plot
 ```
-
+\
+\
 The otuliers are so dominating that it is hard to recognize this being a box 
 plot. Let's exclude the top percentile and run the box plots again.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots09}
 
 #Horizontal box plot, price and neighborhood. Excluding top price percentile.
 plot <- ggplot(filter(airbnb, price < quantile(airbnb$price,0.99)), 
                aes(y = price, x = reorder(neighborhood,price, FUN = mean))) +
   geom_boxplot(outlier.size = 0.5, outlier.alpha = 0.3) + 
-  coord_flip()
+  coord_flip() +
+  labs(x = 'Neighborhood', y = 'Price ($)') +
+  ggtitle('Boxplot, price per neighborhood', subtitle = 'Top 1% prices excluded')
+
 
 plot
 ```
-
+\
+\
 Even after excluding the most extreme (top 1%) prices most neighborhoods seem to 
 have a lot of large outliers. Many neighborhoods have a relatively large spread 
 of prices, and the prices for most neighborhoods are right-skewed.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots10}
 #Price over time, mean
 plot <- ggplot(airbnb, aes(x = date_collected, y = price)) +
   geom_line(stat = 'summary', fun.y = mean) + 
-  ylab('Mean price')
+  ylab('Mean price ($)')
 
 plot
 ```
-
+\
+\
 Except for one outlier date in 2015, the mean price have stayed fairly consistent 
 roughly between 210 and 270,over the whole time period in the dataset (late 2013 
 to mid-2017). This makes me curious about whether there was a special event in 
 San Francisco at the time the data was collected which increased the prices 
 dramatically, or if this is due to some outliers. Let's see if the median price 
 follows the same trend.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots11}
 #Price over time, median
 plot <- ggplot(airbnb, aes(x = date_collected, y = price)) +
   geom_line(stat = 'summary', fun.y = median) + 
-  ylab('Median price')
+  ylab('Median price ($)')
 
 plot
 ```
-
+\
+\
 At first glance the median price appears to be much more volatile than the mean 
 price, but this is mainly due to the y axis being much more narrow in this 
 last plot. Let's plot the statistics together to get a clearer picture.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots12}
 
 #Mean vs median price over time
 plot <- ggplot(airbnb, aes(x = date_collected, y = price)) +
   geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
   geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
+  ylab('Price ($)') +
   theme_light()
 
 legend <- scale_color_manual(name = 'Statistic', 
@@ -667,26 +721,29 @@ legend <- scale_color_manual(name = 'Statistic',
 
 plot + legend
 ```
-
+\
+\
 Here we see that median price in general follows the trend of the mean price. 
 One interesting exception is the outlier date from the mean chart, which is not 
 an outlier for median price. To me this indicates that the 2015 outlier date has 
 some very high outlier prices. Let's investigate this further.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots13}
 #Number of records per date
 plot <- ggplot(airbnb, aes(x=date_collected)) + 
   geom_line(stat= 'count') +
   geom_point(stat='count')
 
+plot
 ```
-
+\
+\
 There is not an unusal number of records for any dates in 2015, so record count 
 is probably not a relevant factor. Next I'll take a closer look at the data for 
 the mean price outlier date.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots14}
 
 #Finding the outlier date
@@ -698,7 +755,8 @@ airbnb %>%
   head()
 
 ```
-
+\
+\
 2015-08-21 is the outlier date. 
 
 Running the summary() function on all the records:
@@ -707,7 +765,8 @@ Running the summary() function on all the records:
 summary(airbnb)
 
 ```
-
+\
+\
 Running the summary() function on the 2015-08-21 records:
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots15b}
 
@@ -715,19 +774,22 @@ subset(airbnb, date_collected == '2015-08-21') %>%
   summary()
 
 ```
-
-Here I'm mostly interested in comparing quantiles for price and 
+\
+\
+Above I am mostly interested in comparing quantiles for price and 
 price_per_bedroom. These variables are not drastically different between the 
 2015-08-21 records and all records.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots16}
 
 #Boxplot of price per date
 plot <- ggplot(airbnb, aes(x = date_collected, 
                            group = date_collected, y = price)) +
   geom_boxplot(outlier.size = 0.5, outlier.alpha = 0.3) + 
-  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months')
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ylab('Price ($)') +
+  ggtitle('Boxplot, price over time')
 
 plot
 ```
@@ -739,7 +801,8 @@ plot <- ggplot(airbnb, aes(x = date_collected,
   scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
   ylim(0,10000) +
   ggtitle('Boxplot with price<=10000') +
-  theme(title = element_text(size=9))
+  theme(title = element_text(size=9)) +
+  ylab('Price ($)')
 
 plot
 ```
@@ -750,21 +813,25 @@ plot <- ggplot(airbnb, aes(x = date_collected, group = date_collected, y = price
   scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
   ylim(0,1000) +
   ggtitle('Boxplot with price<=1000') +
-  theme(title = element_text(size=9))
+  theme(title = element_text(size=9)) +
+  ylab('Price ($)')
 
 plot
 ```
-
+\
+\
 The boxplots indicate that there are more outliers above price 1000 for 
 2015-08-21 compared to the other dates.
-
-
+\
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots19}
 
 #Bar chart, top 5% prices date distribution
 plot <- subset(airbnb, price >= quantile(airbnb$price, 0.95)) %>% 
   ggplot(aes(x = date_collected)) +
-  geom_bar() +
+  geom_line(stat = 'count') +
+  geom_point(stat = 'count') +
   scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
   ggtitle('Top 5% prices in dataset') +
   theme(title = element_text(size=9))
@@ -777,7 +844,8 @@ plot
 #Bar chart, top 2% prices date distribution
 plot <- subset(airbnb, price >= quantile(airbnb$price, 0.98)) %>% 
   ggplot(aes(x = date_collected)) +
-  geom_bar() +
+  geom_line(stat = 'count') +
+  geom_point(stat = 'count') +
   scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
   ggtitle('Top 2% prices in dataset') +
   theme(title = element_text(size=9))
@@ -790,23 +858,25 @@ plot
 #Bar chart, top 1% prices date distribution
 plot <- subset(airbnb, price >= quantile(airbnb$price, 0.99)) %>% 
   ggplot(aes(x = date_collected)) +
-  geom_bar() +
+  geom_line(stat = 'count') +
+  geom_point(stat = 'count') +  
   scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
   ggtitle('Top 1% prices in dataset') +
   theme(title = element_text(size=9))
 
 plot
 ```
-
-Looking at the three bar charts above, we see that the August 2015 date does not 
-have exceptionally many records with price higher than the top 5% prices in the 
-whole dataset, but the August 2015 records do have a very large amount of the 
-top 2% of prices in the dataset, and almost three times as many of the 1% top 
-pricesas any other date in the dataset. Since this is showing absolute counts, 
-and some of the later dates have more records than the August 2015 date, this 
-becomes even more significant.
-
-
+\
+\
+Looking at the three line graphs above, we see that the August 2015 date does 
+not have exceptionally many records with price higher than the top 5% prices in 
+the whole dataset, but the August 2015 records do have a very large amount of 
+the top 2% of prices in the dataset, and almost three times as many of the 1% 
+top prices as any other date in the dataset. Since this is showing absolute 
+counts, and some of the later dates have more records than the August 2015 date,
+this becomes even more significant.
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots22}
 #Percentile dataframe for all dates and the August 2015 date
 df_percentiles = data.frame(all_records = quantile(airbnb$price, seq(0,1,0.01)),
@@ -827,33 +897,38 @@ melted = melt(df_percentiles,id = c('percentile'))
 plot <- ggplot(melted, aes(x = percentile, y = value)) +
   geom_line(aes(color = variable), stat = 'identity') + 
   scale_y_continuous(breaks = c(500,1000,5000,10000,20000,30000)) + 
-  scale_x_continuous(breaks = seq(0,100,5))
+  scale_x_continuous(breaks = seq(0,100,5)) +
+  ylab('Price ($)')
 
 plot
 ```
+\
+\
 Judging from the above plot, the August_2015 price followed the general price 
 trend up to about the 90th percentile. Let's see if we can get some more details 
 by applying log transformation to the plot.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots24}
 
 #Plotting price percentiles, all records vs August 2015, log scale
 plot <- ggplot(melted, aes(x = percentile, y = value)) +
   geom_line(aes(color = variable), stat = 'identity') + 
   scale_y_log10(breaks = c(0,100,500,1000,5000,10000,20000,30000)) + #pretty_breaks(5)) + 
-  scale_x_continuous(breaks = seq(0,100,5))
+  scale_x_continuous(breaks = seq(0,100,5)) +
+  ylab('Price ($)')
 
 plot
 ```
-
+\
+\
 We get a little bit more details from the log transformation, but the trend 
 stays the same:the August 2015 price follows the general trend until about the 
 90th percentile, when the August 2015 price starts to become much higher than 
 for the same percentiles in the whole dataset. I will plot this one last time, 
 zooming in on the top 8 percentiles.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots25}
 
 #Plotting top 8 price percentiles, all records vs August 2015, log scale
@@ -861,16 +936,18 @@ subset(melted, percentile >= 92) %>%
   ggplot(aes(x = percentile, y = value)) +
   geom_line(aes(color = variable), stat = 'identity') + 
   scale_x_continuous(breaks = seq(90,100,1)) +
-  scale_y_continuous(breaks = seq(0,30000,1000))
+  scale_y_continuous(breaks = seq(0,30000,1000)) +
+  ylab('Price ($)')
 
 ```
-
+\
+\
 Compared to the August_2015, the 92nd to 99th percentiles for all_records are 
 very flat. From the 95th percentile, the August_2015 values are many times 
 larger than the values for all_records, only being surpassed at the 100th 
 percentile.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots26}
 
 #Mean vs median price over time, excluding top 1% prices
@@ -883,15 +960,18 @@ plot <- ggplot(subset(airbnb, price < quantile(airbnb$price, 0.99)),
                                           'forestgreen'='forestgreen'), 
                     labels = c('Mean', 'Median')) +
   ggtitle("price < 99th percentile", subtitle = "Top outliers removed.") + 
-  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months')
+  scale_x_date(date_labels = "%b-%y", date_breaks = '6 months') +
+  ylab('Price ($)')
 
 plot
 ```
-
+\
+\
 With the most extreme outliers removed, The August 2015 price mean are much 
 closer to the mean of the other dates.
-
-
+\
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots27}
 
 #Overall satisfaction per neighborhood, mean and median
@@ -912,12 +992,13 @@ legend <- scale_fill_manual(name = 'overall_satisfaction',
 
 plot + legend
 ```
-
+\
+\
 All of the neighborhoods have a median overall_satisfaction score of either 4.5 
 or 5. The mean score varies a little more, although all but two neighborhoods 
 score 4 or better.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots28}
 
 #Plotting price across overall_satisfaction
@@ -933,7 +1014,8 @@ legend <-  scale_color_manual(name = '', values =c('blue'='blue',
 
 plot + legend  
 ```
-
+\
+\
 Based on the above plot it looks like price has a large impact on the 
 overall_satisfaction score. There's also a rather large gap between the median 
 and mean prices, especially for overall_satisfaction score 1.
@@ -943,8 +1025,8 @@ between 1 and 3.5, and 7.5% of the records have a score of 0. It is therefore
 most interesting to look at the price differences in the 4 to 5 
 overall_satisfaction range, where there's a fairly clear trend: pricier units 
 receive better scores.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots29}
 
 #Overall_satisfaction over time
@@ -953,13 +1035,14 @@ plot <- ggplot(airbnb, aes(x = date_collected, y = overall_satisfaction)) +
 
 plot
 ```
-
+\
+\
 The plot showing mean overall_satisfaction over time has a strange dip from the 
 end of 2016 until the end of the date range. I suspect this has something to do 
 with the remaining 0 values in the dataset. I'll take a closer look at those 
 next.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots30}
 
 #plot showing counts of dates with overall_satisfaction 0
@@ -970,23 +1053,25 @@ plot <- ggplot(filter(airbnb, overall_satisfaction == 0),
 plot
 
 ```
-
+\
+\
 Not a single record before 2016-12-23 has an overall_score of 0. Since there is 
 a small chance Airbnb actually allowed 0 overall_satisfaction scores starting 
 late 2016, I won't do anything further with these values. I will instead avoid 
 using this variable in the rest of my analysis.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots31}
 
 #Plotting price across number of bedrooms
-plot <- ggplot(filter(
-  airbnb, bedrooms < quantile(airbnb$bedrooms, 0.995, na.rm = TRUE)), 
+plot <- ggplot(filter(airbnb, bedrooms < quantile(airbnb$bedrooms, 
+                                                  0.995, na.rm = TRUE)), 
        aes(x = bedrooms, y = price)) +
   geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
   geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
   theme_light() +
-  labs(caption = 'Excluding top 0.5% bedroom counts.')
+  labs(caption = 'Excluding top 0.5% bedroom counts.') +
+  ylab('Price ($)')
 
 legend <- scale_color_manual(name = '', values =c('blue'='blue', 
                                           'forestgreen'='forestgreen'), 
@@ -994,7 +1079,8 @@ legend <- scale_color_manual(name = '', values =c('blue'='blue',
 
 plot + legend
 ```
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots32}
 
 #Plotting price across accomodates
@@ -1004,7 +1090,7 @@ plot <- ggplot(filter(airbnb, accommodates < quantile(airbnb$accommodates,
   geom_line(stat = 'summary', fun.y = mean, aes(color = I('blue'))) +
   geom_line(stat = 'summary', fun.y = median,  aes(color = I('forestgreen'))) +
   theme_light() +
-  labs(caption = 'Excluding top 0.5% accomodates counts.')
+  labs(caption = 'Excluding top 0.5% accomodates counts.', y = 'Price ($)')
 
   legend <- scale_color_manual(name = '', 
                                values =c('blue'='blue', 
@@ -1013,12 +1099,13 @@ plot <- ggplot(filter(airbnb, accommodates < quantile(airbnb$accommodates,
 
   plot + legend
 ```
-
+\
+\
 Unsurprisingly, units with more bedrooms cost more. The same trend is true for 
 accomodations: the more people a unit can accomodate, the pricier the unit tend 
 to be.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots33}
 #Making proportion table of room_type and date_collected
 mutated = airbnb %>%
@@ -1032,11 +1119,12 @@ plot <- ggplot(mutated, aes(x=date_collected, fill = room_type,
 
 plot
 ```
-
+\
+\
 Due to the amount of dates, this is not very easy to read. Let's make a line 
 chart instead.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots34}
 
 plot <- ggplot(mutated, aes(x=date_collected, color = room_type, 
@@ -1045,21 +1133,22 @@ plot <- ggplot(mutated, aes(x=date_collected, color = room_type,
 
 plot
 ```
-
+\
+\
 With the line chart we see a clearer picture. The proportion of Entire home/apt 
 units have stayed fairly consistent throughout the time period, while private 
 room units have increased and shared room units have decreased. I also notice 
 that a few dates at the end of 2015 and in the beginning of 2016 lacks room_type 
 information.
-
-
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots35}
 airbnb %>% 
   filter(room_type == '') %>% 
   group_by(date_collected) %>% 
   summarise(n = n())
 ```
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Bivariate_Plots36}
 
 #bedrooms per room_type
@@ -1075,7 +1164,8 @@ plot +
   facet_wrap(~room_type)
 
 ```
-
+\
+\
 It is reassuring to see that both of the two room types Private room and Shared 
 room have a great majority of 1 bedroom units.
 
@@ -1121,7 +1211,8 @@ following finding: larger units cost more.
 
 
 # Multivariate Plots Section
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots01}
 #Preparing common plot functions
 plot <- ggplot(data = filter(airbnb, room_type != '')) +
@@ -1132,25 +1223,28 @@ plot <- ggplot(data = filter(airbnb, room_type != '')) +
 #Histogram for price
 p1 <- plot +
   geom_histogram(binwidth=10, aes(x = price, fill = I('gray50'))) +
-  xlim(0,quantile(airbnb$price, 0.95))
+  xlim(0,quantile(airbnb$price, 0.95)) +
+  xlab('Price ($)')
 
 #Histogram for price_per_bedroom
 p2 <- plot +
   geom_histogram(binwidth=10, aes(x = price_per_bedroom, 
                                   fill = I('deepskyblue'))) +
-  xlim(0,quantile(airbnb$price_per_bedroom, 0.95, na.rm = TRUE)) 
+  xlim(0,quantile(airbnb$price_per_bedroom, 0.95, na.rm = TRUE))  +
+  xlab('Price ($)')
 
 #Including both plots
 grid.arrange(p1,p2, nrow = 2)
 
 ```
-
+\
+\
 Entire home/apt units tend to have a higher price than private rooms, while 
 shared rooms have the lowest prices of the three room_type categories. This make 
 sense, as entire homes tend to be larger than private rooms. While less clear, 
 entire homes also tend to have a higher per bedroom price.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots02}
 #Creating summary table with count, mean and median price for room_type and time 
 mutated = filter(airbnb, room_type != '', 
@@ -1169,16 +1263,18 @@ plot <- ggplot(mutated, aes(x=date_collected, color = room_type)) +
   theme(plot.caption = element_text(size = 8, hjust = 0), 
         plot.title = element_text(size = 12), 
         plot.subtitle = element_text(size = 9)) +
-    scale_color_manual(name='Median', values = c('red','blue','forestgreen'))
+  scale_color_manual(name='Median', values = c('red','blue','forestgreen')) +
+  ylab('Price ($)')
 
 plot
 ```
-
+\
+\
 The prices of entire home units have increased somewhat since the early days. 
 Private rooms first have become a little bit cheaper, while prices for shared 
 rooms, excluding one date in August 2015, have been fairly stable.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots03}
 #Creating filter for plotting, excluding top 1% room counts.
 filtered = filter(airbnb, bedrooms <= quantile(airbnb$bedrooms, 0.99, 
@@ -1193,18 +1289,19 @@ filtered = filter(airbnb, bedrooms <= quantile(airbnb$bedrooms, 0.99,
 
 plot <- ggplot(data = filtered, aes(x = date_collected, y = price)) + 
   geom_line(stat='summary', fun.y = 'mean', aes(linetype = 'mean')) + 
-    geom_line(stat='summary', fun.y = 'median', aes(linetype = 'median')) + 
-    scale_linetype_manual(name="",values=c(mean="solid", median="dashed")) +
-    theme(plot.title = element_text(size=11),
-        legend.position = c(0.9, 0.1), legend.justification = c(1, 0))
+  geom_line(stat='summary', fun.y = 'median', aes(linetype = 'median')) + 
+  scale_linetype_manual(name="",values=c(mean="solid", median="dashed")) +
+  theme(plot.title = element_text(size=11),
+        legend.position = c(0.9, 0.1), legend.justification = c(1, 0)) +
+  ylab('Price ($)')
 
 plot  +
   ggtitle('Price by number of bedrooms 2013-2017') +
   facet_wrap(~ bedrooms)
 
-
 ```
-
+\
+\
 In the plots above I have excluded the units with 5 or more bedrooms (top 1%). 
 With the exception of 4 room units, the median price for all bedroom sizes has 
 stayed stable over time. The mean price is affected by the large price outliers 
@@ -1213,8 +1310,8 @@ stayed stable. The 3 room units had a mean price increase from 2013 until early
 2016, and has since seen a slow mean price decrease of about $100. The mean 
 price for 4 room units saw a sharp increase until early 2016, when it stabilized 
 around $800.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots04}
 neighborhood_price_multi <- airbnb %>%
   group_by(neighborhood, room_type) %>% 
@@ -1225,39 +1322,43 @@ neighborhood_price_multi <- airbnb %>%
 ggplot(filter(neighborhood_price_multi, room_type != ''), aes(y = median, x = neighborhood) ) +
   geom_point(aes(x = reorder(neighborhood, median)), size = 1 ) +
   geom_bar(stat = 'identity', width = 0.1, aes(fill = I('gray50'))) +
-  ylab('Median price') +
+  ylab('Median price ($)') +
   coord_flip() +
   theme_classic() +
   facet_wrap(~room_type)
 ```
-
+\
+\
 For room types Entire home/apt and private room, the median price trend of 
 neighborhoods seem to match the overall trend, with a few exceptions. The price 
 of shared rooms vary much more across neighborhoods, which I suspect is 
 partially due to a low amount of data points in some neighborhoods.
-
-
+\
+\
 ```{r fig.height = 8, fig.width = 8, echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots05}
-ggplot(airbnb, aes(x = date_collected)) +
+plot <- ggplot(airbnb, aes(x = date_collected)) +
   geom_line(stat = 'summary', fun.y = median, 
             aes(y = price, color = I('blue'))) +
   geom_line(stat = 'summary', fun.y = median, 
             aes(y = price_per_bedroom, color = I('forestgreen'))) +
- theme_light() +
+  theme_light() +
   scale_color_manual(name = '', 
                      values =c('blue'='blue', 'forestgreen'='forestgreen'), 
                     labels = c('blue' = 'Price', 
                                'forestgreen' = 'Price per bedroom')) + 
-  facet_wrap(~ neighborhood, ncol = 5)
+  facet_wrap(~ neighborhood, ncol = 5) +
+  ylab('Price ($)')
 
+plot
 
 ```
-
+\
+\
 Looking at this, Presidio stands out. While price per bedroom is fairly stable 
 throughout the time period, the unit price varies drastically. Let's take a 
 closer look at Presidio to figure out what is going on. 
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots06}
 Presidio <-
   airbnb %>% 
@@ -1266,14 +1367,16 @@ Presidio <-
   summarise(n = n(), mean = mean(price), median = median(price), 
             min = min(price), max = max(price), mean_bedrooms = mean(bedrooms))
 
+Presidio
 ```
- 
- Looking at the summary statistics, there seem to be a clear problem with 
- drawing any conclusions from the Presidio data: the sample size per date is 
- just too small, with most dates having less than 10 records. Let's take a look 
- at the sample sizes for all neighborhoods.
-
- 
+\
+\
+Looking at the summary statistics, there seem to be a clear problem with 
+drawing any conclusions from the Presidio data: the sample size per date is 
+just too small, with most dates having less than 10 records. Let's take a look 
+at the sample sizes for all neighborhoods.
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots07}
 neighborhood_count <-  
   airbnb %>% 
@@ -1283,14 +1386,15 @@ neighborhood_count <-
 
 neighborhood_count
 ```
-
+\
+\
 Presidio is clearly the most troublesome neighborhood in this regard, having 
 nearly 60% fewer records than the second lowest neighborhood. However, some of 
 the other neightborhoods might also have too few records to be statistically 
 viable. Let's take a closer look at the records with less than 1000 total 
 records.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots08}
 
 filter_values <- filter(neighborhood_count, n <=1000)$neighborhood
@@ -1302,13 +1406,14 @@ ggplot(filter(airbnb, neighborhood %in% filter_values),
   facet_wrap(~ neighborhood, ncol = 5)
 
 ```
- 
- To some extent all of these are troubling. With the exception of Crocker 
- Amazon, all these neighborhoods have some dates with less than 10 records. 
- However, only the Presidio has consistently around 10 or fewer records per date
- over time.
-
-
+\
+\
+To some extent all of these are troubling. With the exception of Crocker 
+Amazon, all these neighborhoods have some dates with less than 10 records. 
+However, only the Presidio has consistently around 10 or fewer records per date
+over time.
+\
+\
 ```{r fig.height = 8, fig.width = 8, echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plot}
 plot <- ggplot(filter(airbnb, !(neighborhood %in% filter_values)), 
        aes(x = date_collected)) +
@@ -1320,12 +1425,14 @@ plot <- ggplot(filter(airbnb, !(neighborhood %in% filter_values)),
   scale_color_manual(name = '', 
                      values =c('blue'='blue', 'forestgreen'='forestgreen'), 
                     labels = c('Mean', 'Median')) + 
-  facet_wrap(~ neighborhood, ncol = 5)
+  facet_wrap(~ neighborhood, ncol = 5) +
+  ylab('Price ($)')
 
 plot
 
 ```
-
+\
+\
 Excluding the low-record neighborhoods shows a clearer relationship between 
 median price and median price per bedroom for all neighborhoods. 
 I also notice that except for the first date, which we know has many fewer 
@@ -1333,8 +1440,8 @@ records compared to the other dates, the median price per bedroom within
 neighborhoods stayed fairly stable throughout the time period. The same is true 
 for median price, except for Presidio Heights, which had some peaks on certain 
 dates.
-
-
+\
+\
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Multivariate_Plots09}
 #Creating price bins for use with maps
 airbnb$price_bin <- percent_rank(airbnb$price) %>% 
@@ -1358,7 +1465,8 @@ geom_jitter(alpha = 0.1, size = 0.1, aes(x=longitude, y=latitude),
 plot
 
 ```
-
+\
+\
 It looks to me like the most affordable units are widely distrbuted throughout 
 all the neighborhoods, while the most expensive units can mostly be found in the 
 most central parts of the city.
@@ -1395,7 +1503,8 @@ plot1 <- ggplot(airbnb, aes(x = price, fill = I('gray50') ) ) +
   ggtitle("Price distribution") +
   labs(caption = "Excluding top 2% prices.") +
   theme_minimal() +
-  theme(plot.caption = element_text(size = 9,face = 'italic'))
+  theme(plot.caption = element_text(size = 9,face = 'italic')) +
+  xlab('Price ($)')
 
 plot1
 
@@ -1462,6 +1571,7 @@ parts of the city.
 ------
 
 # Reflection
+
 
 Exploring the Airbnb data from San Francisco has been an interesting endeavor. 
 Although I do not think I have discovered any dramatic new findings, there are 
