@@ -11,10 +11,22 @@ def outlierCleaner(predictions, ages, net_worths):
         each tuple is of the form (age, net_worth, error).
     """
     
-    cleaned_data = []
-
     ### your code goes here
 
+    import pandas as pd
+
+    # Setting up dataframe
+    df = pd.DataFrame(predictions, columns=['pred'])
+    df['age'] = ages
+    df['net_worth'] = net_worths
+    df['error'] = abs(df['net_worth'] - df['pred'])
+    
+    # Defining which data points to remove
+    df['remove'] = df['error'] >= df['error'].quantile(0.9)
+    # Dataframe for output
+    df_cleaned_data = df[df['remove'] == False][['age', 'net_worth', 'error']]
+    # List of tuples output
+    cleaned_data = list(df_cleaned_data.itertuples(index=False, name=None))
     
     return cleaned_data
 
