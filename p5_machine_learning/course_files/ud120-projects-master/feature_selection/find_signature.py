@@ -54,11 +54,38 @@ pred = clf.predict(features_test)
 
 # Getting accuracy score
 score = accuracy_score(pred, labels_test)
-print(score)
+print("Accuracy score:", score)
 
-# Getting list of important features
+# Finding the score and index of feature with the highest importance score
 max_importance = max(clf.feature_importances_)
-max_index = numpy.where(clf.feature_importances_ == max_importance)
+max_index = numpy.where(clf.feature_importances_ == max_importance)[0][0]
+print("Max index:", max_index, "Max feature importance:",max_importance)
 
-print(max_index, max_importance)
+# Printing out the most important feature (word)
+print(vectorizer.get_feature_names()[max_index])
 
+# vectorize_text.py has been updated. Looking for any remaining outliers (defined as importance>2)
+count = 0
+outliers = dict()
+# outlier_imp = list()
+# outlier_index = index()
+
+for importance in clf.feature_importances_:
+
+    if importance > 0.2:
+
+        # outlier_imp.append(importance)
+        # outlier_index.append(count)
+        outliers[count] = importance
+    
+    count += 1
+
+count = 0
+
+if len(outliers) == 0:
+    print("No outliers!")
+else:
+    for key,value in outliers.items():
+        print("Outlier word:",vectorizer.get_feature_names()[key])
+        print("Feature importance:", value)
+        print("-----------")
