@@ -60,11 +60,11 @@ for name, from_person in [("sara", from_sara), ("chris", from_chris)]:
         word_data.append(stemmed_email)
         if name == "sara":
             from_data.append(0)
-        elif name == "Chris":
+        elif name == "chris":
             from_data.append(1)
         else:
             print("NAME ERROR: Unknown person!")
-            break
+            print(name)
 
         ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris
 
@@ -79,7 +79,8 @@ pickle.dump( word_data, open("your_word_data.pkl", "wb") )
 pickle.dump( from_data, open("your_email_authors.pkl", "wb") )
 
 
-
+print("word_data count:", len(word_data))
+print("from_data count:", len(from_data))
 
 
 ### in Part 4, do TfIdf vectorization here
