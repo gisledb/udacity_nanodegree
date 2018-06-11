@@ -10,11 +10,20 @@ from tester import dump_classifier_and_data
 import pandas as pd
 import numpy as np
 
+from sklearn.ensemble import RandomForestClassifier
+
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
+from sklearn.metrics import classification_report
 
+from sklearn.preprocessing import Normalizer
 from sklearn.cross_validation import train_test_split
+
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
+
+
 
 ### Task 1: Select what features you'll use.
 ### features_list is a list of strings, each of which is a feature name.
@@ -66,57 +75,31 @@ my_dataset = df_people.fillna('NaN').to_dict(orient='index')
 data = featureFormat(my_dataset, features_list, sort_keys = True)
 labels, features = targetFeatureSplit(data)
 
+# Splitting the dataset into training and test sets
 features_train, features_test, labels_train, labels_test = \
 train_test_split(features, labels, random_state = 42, test_size = 0.3)
 
-### Task 4: Try a varity of classifiers
-### Please name your classifier clf for easy export below.
-### Note that if you want to do PCA or other multi-stage operations,
-### you'll need to use Pipelines. For more info:
-### http://scikit-learn.org/stable/modules/pipeline.html
 
-def report_scores():
-    
-    print("Number of predicted POIs:",sum(pred))
-    print("Number of people in test set:",len(pred))
-    print("Number of actual POIs on test set:",sum(labels_test))
-    
-    accuracy = accuracy_score(labels_test, pred)
-    precision = precision_score(labels_test, pred)
-    recall = recall_score(labels_test, pred)
-    
-    print("Accuracy score:", round(accuracy, 4))
-    print("Precision score:", round(precision, 4))
-    print("Recall score:", round(recall, 4))
+# Setting up the pipeline with a fine-tuned random forest classifier
 
-from sklearn.naive_bayes import GaussianNB
-
-clf = GaussianNB()
+clf = Pipeline(steps = [
+    ('oversample', SMOTE(k=None, k_neighbors=5, kind='regular', m=None, m_neighbors=10, 
+    n_jobs=1, out_step=0.5, random_state=42, ratio='auto', svm_estimator=None)),
+    ('scaler', Normalizer()),
+    ('clf', RandomForestClassifier(bootstrap=True, class_weight=None, criterion='entropy',
+             max_depth=5, max_features=5, max_leaf_nodes=None,
+             min_impurity_decrease=0.0, min_impurity_split=None,
+             min_samples_leaf=10, min_samples_split=5,
+             min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=-1,
+             oob_score=False, random_state=None, verbose=0,
+             warm_start=False))
+])
 
 clf.fit(features_train, labels_train)
 
 pred = clf.predict(features_test)
 
-# report_scores()
-### Task 5: Tune your classifier to achieve better than .3 precision and recall 
-### using our testing script. Check the tester.py script in the final project
-### folder for details on the evaluation method, especially the test_classifier
-### function. Because of the small size of the dataset, the script uses
-### stratified shuffle split cross validation. For more info: 
-### http://scikit-learn.org/stable/modules/generated/sklearn.cross_validation.StratifiedShuffleSplit.html
-
-# # Example starting point. Try investigating other evaluation techniques!
-# from sklearn.cross_validation import train_test_split
-# features_train, features_test, labels_train, labels_test = \
-#     train_test_split(features, labels, test_size=0.3, random_state=42)
-
-from sklearn.ensemble import RandomForestClassifier
-
-clf = RandomForestClassifier(n_estimators = 500, max_leaf_nodes = 16, max_depth=4)
-
-clf.fit(features_train, labels_train)
-pred = clf.predict(features_test)
-report_scores()
+print(classification_report(labels_test, pred))
 
 ### Task 6: Dump your classifier, dataset, and features_list so anyone can
 ### check your results. You do not need to change anything below, but make sure
