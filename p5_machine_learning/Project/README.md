@@ -11,7 +11,6 @@ The file poi_id.py contains the fine-tuned classifier created from my analysis. 
 [What is the proper way to handle NaN](https://discussions.udacity.com/t/what-is-the-proper-way-to-handle-nan/24593/7)  
   
 **Websites**  
-
 https://chrisalbon.com/machine_learning/model_evaluation/cross_validation_parameter_tuning_grid_search/  
 https://chrisalbon.com/machine_learning/model_evaluation/cross_validation_pipeline/  
 https://chrisalbon.com/machine_learning/preprocessing_structured_data/handling_imbalanced_classes_with_upsampling/  
