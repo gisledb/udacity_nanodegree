@@ -1,11 +1,14 @@
 #!/usr/bin/python
 
 import sys
+import warnings
 import pickle
 sys.path.append("../tools/")
 
+print('starting')
 from feature_format import featureFormat, targetFeatureSplit
 from tester import dump_classifier_and_data
+from tester import test_classifier
 
 import pandas as pd
 import numpy as np
@@ -15,19 +18,19 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import precision_score
+from sklearn.metrics import f1_score
 from sklearn.metrics import classification_report
 
 from sklearn.preprocessing import Normalizer
-from sklearn.cross_validation import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 
 from imblearn.over_sampling import SMOTE
 from imblearn.pipeline import Pipeline
 
-
-
-### Task 1: Select what features you'll use.
-### features_list is a list of strings, each of which is a feature name.
-### The first feature must be "poi".
 
 ### Load the dictionary containing the dataset
 with open("final_project_dataset.pkl", "rb") as data_file:
@@ -42,11 +45,9 @@ features_to_use = ['bonus', 'deferred_income', 'from_poi_to_this_person',
                    'from_this_person_to_poi', 'long_term_incentive', 'restricted_stock', 
                    'salary', 'shared_receipt_with_poi', 'total_stock_value']
 
-### Task 2: Remove outliers
 # Removing outlier: row with aggregated total values
-df_people = df_people.drop('TOTAL')
+df_people = df_people.drop(['THE TRAVEL AGENCY IN THE PARK', 'LOCKHART EUGENE E','TOTAL'])
 
-### Task 3: Create new feature(s)
 # Creating new features
 
 # function for creating fraction/ratio features
@@ -82,28 +83,65 @@ train_test_split(features, labels, random_state = 42, test_size = 0.3)
 
 # Setting up the pipeline with a fine-tuned random forest classifier
 
-clf = Pipeline(steps = [
-    ('oversample', SMOTE(k=None, k_neighbors=5, kind='regular', m=None, m_neighbors=10, 
-    n_jobs=1, out_step=0.5, random_state=42, ratio='auto', svm_estimator=None)),
-    ('scaler', Normalizer()),
-    ('clf', RandomForestClassifier(bootstrap=True, class_weight=None, criterion='entropy',
-             max_depth=5, max_features=5, max_leaf_nodes=None,
-             min_impurity_decrease=0.0, min_impurity_split=None,
-             min_samples_leaf=10, min_samples_split=5,
-             min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=-1,
-             oob_score=False, random_state=None, verbose=0,
-             warm_start=False))
+# clf = Pipeline(steps = [
+#     ('oversample', SMOTE(k=None, k_neighbors=5, kind='regular', m=None, m_neighbors=10, 
+#     n_jobs=1, out_step=0.5, random_state=42, ratio='auto', svm_estimator=None)),
+#     ('scaler', Normalizer()),
+#     ('clf', RandomForestClassifier(bootstrap=True, class_weight=None, criterion='entropy',
+#              max_depth=5, max_features=5, max_leaf_nodes=None,
+#              min_impurity_decrease=0.0, min_impurity_split=None,
+#              min_samples_leaf=10, min_samples_split=5,
+#              min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=-1,
+#              oob_score=False, random_state=None, verbose=0,
+#              warm_start=False))
+# ])
+
+
+# clf.fit(features_train, labels_train)
+
+# pred = clf.predict(features_test)
+
+rf_pipeline = Pipeline(steps=[
+    ('oversample', SMOTE(random_state=42)),
+    ('scaler', StandardScaler()),
+    ('reduce_dim', PCA()), 
+    ('clf', RandomForestClassifier(criterion='entropy', n_jobs=-1))
 ])
 
-clf.fit(features_train, labels_train)
+rf_param_grid = [
+    {'oversample': [None, SMOTE(random_state=42)],    
+     'scaler': [None, StandardScaler(), Normalizer()],
+     'reduce_dim': [None, PCA(5)],
+     'clf__max_features': [3,5,'auto'],
+     'clf__max_depth': [5,10],
+     'clf__min_samples_split': [3,5,10],
+     'clf__min_samples_leaf': [1,2,5],
+    'clf__n_estimators': [100]},
+     ]
 
-pred = clf.predict(features_test)
+# Avoiding excessive amount of repetitive warnings during grid search
+warnings.filterwarnings('ignore')
 
-print(classification_report(labels_test, pred))
+# Setting up grid search 
+grid_search = GridSearchCV(estimator=rf_pipeline, param_grid=rf_param_grid, n_jobs=-1, scoring='f1')
 
-### Task 6: Dump your classifier, dataset, and features_list so anyone can
-### check your results. You do not need to change anything below, but make sure
-### that the version of poi_id.py that you submit can be run on its own and
-### generates the necessary .pkl files for validating your results.
+grid_search.fit(features_train, labels_train)
 
-dump_classifier_and_data(clf, my_dataset, features_list)
+# Turning warnings back on
+warnings.filterwarnings('default')
+
+pred = grid_search.predict(features_test)
+
+print("Prediction scores for the test data")
+print("Accuracy:", accuracy_score(labels_test, pred))
+print("Precision:", precision_score(labels_test, pred))
+print("Recall:", recall_score(labels_test, pred))
+print("F1:", f1_score(labels_test, pred))
+
+clf = grid_search.best_estimator_
+
+# Testing my classifier
+# test_classifier(clf, my_dataset, features_list)
+
+# Creating Pickle files
+classification_report(labels_test, pred)
