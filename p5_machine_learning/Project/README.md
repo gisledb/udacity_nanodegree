@@ -1,4 +1,6 @@
+#### Information about the files
 
+The file poi_id.py contains the fine-tuned classifier created from my analysis. For full details about my analysis, see poi_id.ipynb or poi_id.html. For answers to the free-response questions, see submission_answers.html.
 
 #### Resources
 
@@ -16,7 +18,7 @@ https://chrisalbon.com/machine_learning/preprocessing_structured_data/handling_i
 https://www.civisanalytics.com/blog/workflows-in-python-using-pipeline-and-gridsearchcv-for-more-compact-and-comprehensive-code/  
 http://contrib.scikit-learn.org/imbalanced-learn/stable/generated/imblearn.over_sampling.SMOTE.html/  
 https://machinelearningmastery.com/tactics-to-combat-imbalanced-classes-in-your-machine-learning-dataset/  
-  
+
 Various scikit-learn documentation, found at http://scikit-learn.org/stable/  
 Various stackoverflow.com questions, including  
 https://stackoverflow.com/questions/9031783/hide-all-warnings-in-ipython  
